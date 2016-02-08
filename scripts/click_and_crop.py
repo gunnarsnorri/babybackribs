@@ -31,42 +31,44 @@ def click_and_crop(event, x, y, flags, param):
         cv2.rectangle(image, refPt[0], refPt[1], (0, 255, 0), 2)
         cv2.imshow("image", image)
 
-# construct the argument parser and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--image", required=True, help="Path to the image")
-args = vars(ap.parse_args())
 
-# load the image, clone it, and setup the mouse callback function
-image = cv2.imread(args["image"])
-clone = image.copy()
-cv2.namedWindow("image")
-cv2.setMouseCallback("image", click_and_crop)
+if __name__ == "__main__":
+    # construct the argument parser and parse the arguments
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-i", "--image", required=True, help="Path to the image")
+    args = vars(ap.parse_args())
 
-# keep looping until the 'c' key is pressed
-while True:
-    # display the image and wait for a keypress
-    cv2.imshow("image", image)
-    key = cv2.waitKey(1) & 0xFF
+    # load the image, clone it, and setup the mouse callback function
+    image = cv2.imread(args["image"])
+    clone = image.copy()
+    cv2.namedWindow("image")
+    cv2.setMouseCallback("image", click_and_crop)
 
-    # if the 'r' key is pressed, reset the cropping region
-    if key == ord("r"):
-        image = clone.copy()
+    # keep looping until the 'c' key is pressed
+    while True:
+        # display the image and wait for a keypress
+        cv2.imshow("image", image)
+        key = cv2.waitKey(1) & 0xFF
 
-    # if the 'c' key is pressed, break from the loop
-    elif key == ord("c"):
-        break
+        # if the 'r' key is pressed, reset the cropping region
+        if key == ord("r"):
+            image = clone.copy()
 
-# if there are two reference points, then crop the region of interest
-# from teh image and display it
-if len(refPt) == 2:
-    y1 = min(refPt[0][1], refPt[1][1])
-    y2 = max(refPt[0][1], refPt[1][1])
-    x1 = min(refPt[0][0], refPt[1][0])
-    x2 = max(refPt[0][0], refPt[1][0])
+        # if the 'c' key is pressed, break from the loop
+        elif key == ord("c"):
+            break
 
-    roi = clone[y1:y2, x1:x2]
-    cv2.imshow("ROI", roi)
-    cv2.waitKey(0)
+    # if there are two reference points, then crop the region of interest
+    # from teh image and display it
+    if len(refPt) == 2:
+        x1 = min(refPt[0][0], refPt[1][0])
+        x2 = max(refPt[0][0], refPt[1][0])
+        y1 = min(refPt[0][1], refPt[1][1])
+        y2 = max(refPt[0][1], refPt[1][1])
 
-# close all open windows
-cv2.destroyAllWindows()
+        roi = clone[y1:y2, x1:x2]
+        cv2.imshow("ROI", roi)
+        cv2.waitKey(0)
+
+    # close all open windows
+    cv2.destroyAllWindows()
