@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # import the necessary packages
 import argparse
 import cv2
@@ -41,7 +42,7 @@ clone = image.copy()
 cv2.namedWindow("image")
 cv2.setMouseCallback("image", click_and_crop)
 
-# keep looping until the 'q' key is pressed
+# keep looping until the 'c' key is pressed
 while True:
     # display the image and wait for a keypress
     cv2.imshow("image", image)

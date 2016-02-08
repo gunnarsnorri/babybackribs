@@ -22,4 +22,7 @@ with open(gt_file, 'r') as f:
         category = row[5]
         if not os.path.exists("%s/%s" % (target_dir, category)):
             os.makedirs("%s/%s" % (target_dir, category))
-        copyfile("%s/%s" % (source_dir, image_file), "%s/%s/%s" % (target_dir, category, image_file))
+        copyfile(
+            "%s/%s" %
+            (source_dir, image_file), "%s/%s/%s" %
+            (target_dir, category, image_file))
