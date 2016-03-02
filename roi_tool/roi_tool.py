@@ -1,12 +1,15 @@
 #!/usr/bin/env python
+import argparse
+
 from gui import ROIApp
 
 
-image_fullname = "/home/gunsno/Wallpapers/ubuntu.jpg"
-
 if __name__ == "__main__":
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-i", "--indir", required=True,
+                    help="Path to the source directory")
+    args = vars(ap.parse_args())
 
-    win = ROIApp()
-    win.set_image(image_fullname)
+    win = ROIApp(args["indir"])
 
     win.root.mainloop()
