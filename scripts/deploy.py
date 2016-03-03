@@ -216,19 +216,12 @@ def classify(caffemodel, deploy_file, image_files,
                 label = labels[i]
             result.append((label, round(100.0*scores[image_index, i],4)))
         classifications.append(result)
-
+'''
     for index, classification in enumerate(classifications):
         print '{:-^80}'.format(' Prediction for %s ' % image_files[index])
         for label, confidence in classification:
             print '{:9.4%} - "{}"'.format(confidence/100.0, label)
         print
-
-# Written script
-pathImages	= sys.argv[1]
-pathModel	= sys.argv[2]
-pathDeploytext	= sys.argv[3]
-start_time = time.time()
-classify(pathModel, pathDeploytext, pathImages)
-duration = time.time()-start_time
-print('Time for classification script: %s'%duration)
+'''
+    return classifications
 
