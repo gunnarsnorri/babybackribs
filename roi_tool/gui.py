@@ -53,6 +53,7 @@ class ROIApp(object):
         self.show_frame()
 
     def quit(self):
+        self.gt_writer.writerows(self.gt_rows)
         self.gt_file.close()
         self.root.quit()
 
@@ -73,7 +74,6 @@ class ROIApp(object):
                 print(
                     "Done, regions of interest written in %s" %
                     self.gt_filename)
-                self.gt_writer.writerows(self.gt_rows)
                 self.quit()
 
     def on_kp_enter(self, event):

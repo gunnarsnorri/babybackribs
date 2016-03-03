@@ -13,4 +13,6 @@ Instructions
 ------------
 ./roi_tool.py -i /path/to/source/directory
 
-Select the regions of interest and hit <Space>, then classify and hit enter
+The ROI tool will give the first image found in the source directory. Select the regions of interest by dragging the mouse over them and and hit Enter. The first region of interest will be shown in red, write the class and hit Enter. The already classified regions of interest will be blue and the not yet classified remain green.
+
+To exit, hit Escape
