@@ -21,6 +21,8 @@ class ROIApp(object):
 
         self.root = Tk()
         self.root.bind("<Escape>", lambda e: self.quit())
+        self.root.bind("<KP_Enter>", self.on_kp_enter)
+        self.root.bind("<Return>", self.on_kp_enter)
         self.root.wm_title("ROI Tool")
 
         # Frame for the input field and buttons
@@ -31,11 +33,9 @@ class ROIApp(object):
         self.label.pack(side="left")
         self.entry_field = Entry(self.input_frame)
         self.entry_field.pack(side="left")
-        self.entry_field.bind("<Return>", self.categorize)
 
         self.image_label = Label(self.root)
         self.image_label.pack(side="bottom")
-        self.root.bind("<space>", self.done_selecting)
         self.image_label.bind("<ButtonPress-1>", self.on_button_press)
         self.image_label.bind("<ButtonRelease-1>", self.on_button_release)
 
@@ -56,11 +56,6 @@ class ROIApp(object):
         self.gt_file.close()
         self.root.quit()
 
-    def done_selecting(self, event):
-        self.state = "Categorizing"
-        self.ref_pts_iter = iter(self.ref_pts)
-        self.ref_pts = []
-        self.ask_for_next_category()
 
     def ask_for_next_category(self):
         """Ask for next category if another ref point exists,
@@ -81,13 +76,18 @@ class ROIApp(object):
                 self.gt_writer.writerows(self.gt_rows)
                 self.quit()
 
-    def categorize(self, event):
+    def on_kp_enter(self, event):
         if self.state == "Categorizing":
             category = self.entry_field.get()
             data = (self.current_ref_pt[0] +
                     self.current_ref_pt[1] + (category,))
             self.gt_rows.append(data)
             self.draw.rectangle(self.current_ref_pt, outline="blue")
+            self.ask_for_next_category()
+        else:
+            self.state = "Categorizing"
+            self.ref_pts_iter = iter(self.ref_pts)
+            self.ref_pts = []
             self.ask_for_next_category()
 
     def get_images(self):
