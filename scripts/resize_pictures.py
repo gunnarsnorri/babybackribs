@@ -18,6 +18,8 @@ if __name__ == "__main__":
 
     source_dir = args["indir"]
     target_dir = args["outdir"]
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
     width = args["width"]
     height = args["height"]
     filetypes = ["ppm", "jpg", "jpeg", "png", "bmp"]
