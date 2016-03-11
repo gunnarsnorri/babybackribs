@@ -6,7 +6,7 @@ import xml.etree.ElementTree as ET
 
 
 def add_object_xml(name, bndbox, annotation):
-    _object = ET.SubElement(annotation,'object')
+    _object = ET.SubElement(annotation, 'object')
     _object_name = ET.SubElement(_object, 'name')
     _object_name.text = name
 
@@ -16,12 +16,13 @@ def add_object_xml(name, bndbox, annotation):
     xmax = ET.SubElement(_object_bndbox, 'xmax')
     ymax = ET.SubElement(_object_bndbox, 'ymax')
 
-    xmin.text = '%s'%bndbox[0] 
-    ymin.text = '%s'%bndbox[1] 
-    xmax.text = '%s'%bndbox[2]
-    ymax.text = '%s'%bndbox[3]
+    xmin.text = '%s' % bndbox[0]
+    ymin.text = '%s' % bndbox[1]
+    xmax.text = '%s' % bndbox[2]
+    ymax.text = '%s' % bndbox[3]
 
     return _object
+
 
 def create_xml(folder_name, image_name, database, object_name, bndbox):
     annotation = ET.Element('annotation')
@@ -35,7 +36,7 @@ def create_xml(folder_name, image_name, database, object_name, bndbox):
     source = ET.SubElement(annotation, 'source')
 
     database_source = ET.SubElement(source, 'database')
-    database_source.text=database
+    database_source.text = database
 
     annotation_source = ET.SubElement(source, 'annotation')
     annotation_source.text = 'Traffic2016'
@@ -47,13 +48,13 @@ def create_xml(folder_name, image_name, database, object_name, bndbox):
     size_width = ET.SubElement(_size, 'width')
     size_height = ET.SubElement(_size, 'height')
     size_depth = ET.SubElement(_size, 'depth')
-    size_width.text = '%s'%size[0]    
-    size_width.text = '%s'%size[1]
-    size_depth.text = '%s'%size[2]
+    size_width.text = '%s' % size[0]
+    size_width.text = '%s' % size[1]
+    size_depth.text = '%s' % size[2]
 
-    add_object_xml(object_name,bndbox, annotation)
-    
-    return annotation       
+    add_object_xml(object_name, bndbox, annotation)
+
+    return annotation
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser
@@ -74,33 +75,19 @@ if __name__ == "__main__":
     with open(txt_dir) as read_f:
         database =
         folder_name =
-        
+
         for line in read_f:
             line = line.strip("\n")
             image_name =
-            object_name = 
+            object_name =
             bndbox =
-            line_dir='%s/%s.xml'%(target_dir,image_name)
-            
+            line_dir = '%s/%s.xml' % (target_dir, image_name)
+
             if not os.path.exists(line_dir)
-                annotation = create_xml(folder_name, image_name, database, object_name, bndbox)
-            else 
+                annotation = create_xml(
+                    folder_name, image_name, database, object_name, bndbox)
+            else
                 annotation = ET.parse(line_dir)
                 add_object_xml(object_name, bndbox, annotation)
 
-            annotation.write('%s.xml'%line_dir)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+            annotation.write('%s.xml' % line_dir)
