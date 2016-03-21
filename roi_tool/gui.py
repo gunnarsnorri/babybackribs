@@ -1,4 +1,5 @@
 import os
+import sys
 import csv
 from Tkinter import Tk, Entry, Label, Frame
 from PIL import Image, ImageTk, ImageDraw
@@ -9,14 +10,15 @@ class ROIApp(object):
     def __init__(self, source_dir):
         self.state = "Selecting"
 
+        self.image_types = ["ppm", "jpg", "jpeg", "png", "bmp"]  # Add more
         self.source_dir = source_dir
+        self.gt_filename = os.path.join(self.source_dir, "gt.txt")
         images = self.get_images()
         self.image_fullpaths = (
             os.path.join(self.source_dir, image_filename)
             for image_filename in images)
         self.current_image_fullpath = None
-        self.gt_filename = os.path.join(self.source_dir, "gt.txt")
-        self.gt_file = open(self.gt_filename, 'w')
+        self.gt_file = open(self.gt_filename, 'a')
         self.gt_writer = csv.writer(self.gt_file, delimiter=";")
 
         self.root = Tk()
@@ -49,14 +51,19 @@ class ROIApp(object):
         self.current_ref_pt = None
         self.gt_rows = []
 
-        self.next_image()
+        try:
+            self.next_image()
+        except StopIteration:
+            print("No images were found (extensions %s) "
+                  "or all the images found were already parsed, check file "
+                  "%s" % (", ".join(self.image_types), self.gt_filename))
+            self.quit()
+            sys.exit(1)
         self.show_frame()
 
     def quit(self):
-        self.gt_writer.writerows(self.gt_rows)
         self.gt_file.close()
         self.root.quit()
-
 
     def ask_for_next_category(self):
         """Ask for next category if another ref point exists,
@@ -79,7 +86,8 @@ class ROIApp(object):
     def on_kp_enter(self, event):
         if self.state == "Categorizing":
             category = self.entry_field.get()
-            data = (self.current_ref_pt[0] +
+            image_path = self.current_image_fullpath.split("/")[-1]
+            data = ((image_path,) + self.current_ref_pt[0] +
                     self.current_ref_pt[1] + (category,))
             self.gt_rows.append(data)
             self.draw.rectangle(self.current_ref_pt, outline="blue")
@@ -91,11 +99,19 @@ class ROIApp(object):
             self.ask_for_next_category()
 
     def get_images(self):
-        filetypes = ["ppm", "jpg", "jpeg", "png", "bmp"]
+        try:
+            gt_file = open(self.gt_filename, 'r')
+            reader = csv.reader(gt_file, delimiter=";")
+            already_parsed = [row[0] for row in reader]
+        except IOError:
+            already_parsed = []
         return [filename for filename in os.listdir(self.source_dir) if
-                filename.split(".")[-1] in filetypes]
+                (filename.split(".")[-1] in self.image_types and
+                 filename not in already_parsed)]
 
     def next_image(self):
+        self.gt_writer.writerows(self.gt_rows)
+        self.gt_rows = []
         self.current_image_fullpath = self.image_fullpaths.next()
         self.image = Image.open(self.current_image_fullpath)
         self.draw = ImageDraw.Draw(self.image)
