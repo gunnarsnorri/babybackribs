@@ -12,4 +12,8 @@ if __name__ == "__main__":
 
     win = ROIApp(args["indir"])
 
-    win.root.mainloop()
+    try:
+        win.root.mainloop()
+    except KeyboardInterrupt:
+        win.quit()
+        raise
