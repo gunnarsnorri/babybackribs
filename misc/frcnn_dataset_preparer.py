@@ -73,17 +73,17 @@ if __name__ == "__main__":
         os.makedirs('%s/data/ImageSets'%target_dir)
     with open(txt_dir) as read_f:
         database = 'Generic database name' # Can be changed to desired name of the database
-        folder_name = imdir.strip("/")
+        folder_name = imdir.split("/")
         folder_name = folder_name[-2]
 
         last_image = None
         for line in read_f:
             line = line.strip("\n")
-            line = line.strip(";")
+            line = line.split(";")
             image_name = line[0]
             object_name = line[5]
             bndbox[0:4] = line[1:5] 
-            line_dir = '%s/%s.xml' % (target_dir, image_name[0].strip("."))
+            line_dir = '%s/%s.xml' % (target_dir, image_name.split(".")[0])
 
             if not os.path.exists(line_dir):
                 annotation = create_xml(
@@ -96,7 +96,7 @@ if __name__ == "__main__":
 
             with open('%s/data/ImageSets/train.txt'%target_dir, 'w') as write_f:
                 if image_name != last_image:
-                    write_f.write('%s\n'%image_name[0].strip("."))
+                    write_f.write('%s\n'%image_name.split(".")[0])
             last_image = image_name
             
             if not os.path.exists('%s/data/Images/%s'%(target_dir,image_name)):
