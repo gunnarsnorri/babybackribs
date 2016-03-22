@@ -8,7 +8,11 @@ import cPickle
 import os
 import datasets.imdb
 import scipy.sparse
-
+import np as numpy
+import shutil
+import xml.etree.ElementTree as ET
+import datasets
+import datasets.traffic
 
 class traffic(datasets.imdb):
 
@@ -83,31 +87,40 @@ class traffic(datasets.imdb):
 
     def _load_dataset_annotation(self, index):
 
-        filename = os.path.join(self._data_path, 'Annotations', index + '.txt')
-
+        filename = os.path.join(self._data_path, 'Annotations', index + '.xml')
+        tree = ET.parse(filename)
+        objs = tree.findall('object')
         with open(filename) as f:
             data = f.read()
         # handle the data from the txt file
         # save all lines containing data in objs
+        num_objs = len(objs)
+
+        boxes = np.zeros((num_objs, 4), dtype = np.uint16)
+        gt_classes = np.zeros((num_objs), dtype = np.int32)
+        overlaps = np.zeros((num_objs,self.num_classes), dtype = np.float32)
+        seg_areas = np.zeros((num_objs), dtype = np.float32)
+
         for ix, obj in enumerate(objs)
-            x1 =
-            y1 =
-            x2 =
-            y2 =
-            # Dont know what dict, zip and xrange
-            cls = self._class_to_ind['sign']
-                                             # does in the original call in
-                                             # _class_to_ind
-            boxes[ix, : ] = [x1, y1, x2, y2]
+            bbox = obj.find('bndbox')
+            x1 = float(bbox.find('xmin').text)
+            y1 = float(bbox.find('ymin').text)
+            x2 = float(bbox.find('xmax').text)
+            y2 = float(bbox.find('ymax').text)
+            cls = self._class_to_ind['sign'] #Dont know what dict, zip and xrange
+                                             #does in the original call in _class_to_ind
+            boxes[ix, :] = [x1, y1, x2, y2]
             gt_classes[ix] = cls
-            overlaps[ix, cls] = 1.0
+            overlaps[ix,cls] = 1.0
+            seg_areas[ix] = (x2-x1)*(y2-y1)
         overlaps = scipy.sparse.csr_matrix(overlaps)
 
-        return {'boxes': boxes,
+        return {'boxes'       : boxes,
                 'gt_classes'  : gt_classes,
                 'gt_overlaps' : overlaps,
                 'flipped'     : False
                }
+              
 
     def _write_dataset_results_file(self, all_boxes):
         use_salt = self.config['use_salt']

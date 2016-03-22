@@ -12,6 +12,8 @@ __sets = {}
 from datasets.pascal_voc import pascal_voc
 from datasets.coco import coco
 import numpy as np
+import dataset.traffic
+
 
 # Set up voc_<year>_<split> using selective search "fast" mode
 for year in ['2007', '2012']:
@@ -32,7 +34,7 @@ for year in ['2015']:
         __sets[name] = (lambda split=split, year=year: coco(split, year))
 
 # Set up traffic
-traffic_devkit_path = #path to devkit example '/home/szy/INRIA'
+traffic_devkit_path = /mnt/nvme/py-faster-rcnn/traffic #path to devkit example '/home/szy/INRIA'
 for split in ['train', 'test']
     name = '{}_{}'.format('traffic', split)
     __sets[name] = (lambda split=split: datasets.traffic(split, dataset_devkit_path))
