@@ -20,9 +20,9 @@ if __name__ == "__main__":
         os.makedirs(target_dir)
 
     with open(txt_dir) as read_f:
-        with open('%s/Annotations.txt'%target_dir, 'w') as write_f:
+        with open('%s/Annotations.txt' % target_dir, 'w') as write_f:
             for line in read_f:
-                #pdb.set_trace()
+                # pdb.set_trace()
                 line = line.strip("\r\n")
                 line = line.strip(" ")
                 image_name = line.split(":")[0]
@@ -32,9 +32,11 @@ if __name__ == "__main__":
                     del image_info[-1:]
                     objects = [x.split(",") for x in image_info]
                     for _object in objects:
-                        if len(_object) > 1:           
+                        if len(_object) > 1:
                             xmax = int(round(float(_object[1])))
                             ymax = int(round(float(_object[2])))
                             xmin = int(round(float(_object[3])))
                             ymin = int(round(float(_object[4])))
-                            write_f.write('%s;%s;%s;%s;%s\n'%(image_name,xmin,ymin,xmax,ymax))
+                            write_f.write(
+                                '%s;%s;%s;%s;%s;%s\n' %
+                                (image_name, xmin, ymin, xmax, ymax, _object[6]))
