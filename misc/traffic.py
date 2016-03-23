@@ -11,10 +11,9 @@ import scipy.sparse
 import numpy as np
 import xml.etree.ElementTree as ET
 import datasets
-import datasets.traffic
 
 
-class traffic(datasets.imdb):
+class Traffic(datasets.imdb):
 
     def __init__(self, image_set, devkit_path=None):
         datasets.imdb.__init__(self, image_set)
@@ -90,10 +89,6 @@ class traffic(datasets.imdb):
         filename = os.path.join(self._data_path, 'Annotations', index + '.xml')
         tree = ET.parse(filename)
         objs = tree.findall('object')
-        with open(filename) as f:
-            data = f.read()
-            # TODO: handle the data from the txt file
-            # save all lines containing data in objs
         num_objs = len(objs)
 
         boxes = np.zeros((num_objs, 4), dtype=np.uint16)
@@ -156,7 +151,7 @@ class traffic(datasets.imdb):
         pass  # TODO
 
     def evaluate_detections(self, all_boxes, output_dir):
-        comp_id = self._write_dataset_results_file(all_boxes)  # XXX:what is this?
+        # comp_id = self._write_dataset_results_file(all_boxes)  # XXX:what is this?
         self._do_python_eval(output_dir)
 
     def competition_mode(self, on):
