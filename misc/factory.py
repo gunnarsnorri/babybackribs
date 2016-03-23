@@ -34,16 +34,21 @@ for year in ['2015']:
         __sets[name] = (lambda split=split, year=year: coco(split, year))
 
 # Set up traffic
-traffic_devkit_path = /mnt/nvme/py-faster-rcnn/traffic #path to devkit example '/home/szy/INRIA'
+# path to devkit example '/home/szy/INRIA'
+traffic_devkit_path = /mnt/nvme/py-faster-rcnn/traffic
 for split in ['train', 'test']
     name = '{}_{}'.format('traffic', split)
-    __sets[name] = (lambda split=split: datasets.traffic(split, dataset_devkit_path))
+    __sets[name] = (
+        lambda split=split: datasets.traffic(
+            split, dataset_devkit_path))
+
 
 def get_imdb(name):
     """Get an imdb (image database) by name."""
     if not __sets.has_key(name):
         raise KeyError('Unknown dataset: {}'.format(name))
     return __sets[name]()
+
 
 def list_imdbs():
     """List all registered imdbs."""

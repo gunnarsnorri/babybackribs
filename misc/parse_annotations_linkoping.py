@@ -24,16 +24,17 @@ if __name__ == "__main__":
             for line in read_f:
                 #pdb.set_trace()
                 line = line.strip("\r\n")
+                line = line.strip(" ")
                 image_name = line.split(":")[0]
                 if len(line.split(":")) > 1:
                     image_info = line.split(":")[1]
                     image_info = image_info.split(";")
                     del image_info[-1:]
-                    objects = [x.split(", ") for x in image_info]
+                    objects = [x.split(",") for x in image_info]
                     for _object in objects:
                         if len(_object) > 1:           
-                            xmax = _object[1]
-                            ymax = _object[2]
-                            xmin = _object[3]
-                            ymin = _object[4]
+                            xmax = int(round(float(_object[1])))
+                            ymax = int(round(float(_object[2])))
+                            xmin = int(round(float(_object[3])))
+                            ymin = int(round(float(_object[4])))
                             write_f.write('%s;%s;%s;%s;%s\n'%(image_name,xmin,ymin,xmax,ymax))
