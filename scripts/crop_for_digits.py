@@ -2,6 +2,9 @@
 
 import cv2
 import argparse
+import os
+import os.path
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("-t", "--txt", required=True, help="Path to annotation.txt")
@@ -19,6 +22,7 @@ if __name__ == "__main__":
         for line in read_f:
             line = line.strip("\n")
             image_name = line.split(";")[0]
+            line = line.split(";")
             image_path = ('%s/%s' % (image_dir, image_name))
             image = cv2.imread(image_path)
             x = int(line[1])
@@ -30,6 +34,8 @@ if __name__ == "__main__":
                 i = 0
             crop_image_path = ('%s/%s/%s_%s.jpg' %
                                (crop_dir, line[5], image_name.split(".")[0], i))
+            if not os.path.exists('%s/%s' % (crop_dir, line[5])):
+                os.mkdir('%s/%s' % (crop_dir, line[5]))
             cv2.imwrite(crop_image_path, cropped_image)
             i += 1
             last_image = image_name
