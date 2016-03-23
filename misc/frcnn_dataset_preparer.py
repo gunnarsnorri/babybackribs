@@ -53,16 +53,15 @@ def create_xml(folder_name, image_name, database, object_name, bndbox):
     size_depth.text = '%s' % _size[2]
 
     return add_object_xml(object_name, bndbox, annotation)
-
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser
+    ap = argparse.ArgumentParser()
     ap.add_argument("-t", "--txt", required=True,
                     help="Path to the annotation txt")
     ap.add_argument("-o", "--outdir", required=True,
                     help="Path to the output directory")
     ap.add_argument("-i", "--imdir", required=True,
                     help="Path to the image directory")
-    args = vars(ap.parse_args)
+    args = vars(ap.parse_args())
     txt_dir = args["txt"]
     target_dir = args["outdir"]
     image_dir = args["imdir"]
@@ -75,35 +74,40 @@ if __name__ == "__main__":
         # Can be changed to desired name of the database
         database = 'traffic'
         folder_name = image_dir.split("/")
-        folder_name = folder_name[-2]
+        folder_name = folder_name[-1]
+        with open('%s/data/ImageSets/train.txt' % target_dir, 'w') as write_f:
+            last_image = None
+            for line in read_f:
+                line = line.strip("\n")
+                line = line.split(";")
+                image_name = line[0]
+                object_name = 'sign' #TODO fix annotation script + line[5]
+                bndbox = line[1:5]
+                line_dir = '%s/data/Annotations/%s.xml' % (target_dir, image_name.split(".")[0])
+                if not os.path.exists(line_dir):
+                    annotation = create_xml(
+                        folder_name, image_name, database, object_name, bndbox)
+                else:
+                    tree = ET.parse(line_dir)
+                    annotation = tree.getroot()
+                    annotation = add_object_xml(object_name, bndbox, annotation)
 
-        last_image = None
-        for line in read_f:
-            line = line.strip("\n")
-            line = line.split(";")
-            image_name = line[0]
-            object_name = line[5]
-            bndbox = line[1:5]
-            line_dir = '%s/%s.xml' % (target_dir, image_name.split(".")[0])
+                try:
+                    tree = ET.ElementTree(annotation)
+                    tree.write(line_dir)
+                except:
+                    import pdb; pdb.set_trace()  # XXX BREAKPOINT
+                    raise
 
-            if not os.path.exists(line_dir):
-                annotation = create_xml(
-                    folder_name, image_name, database, object_name, bndbox)
-            else:
-                annotation = ET.parse(line_dir)
-                annotation = add_object_xml(object_name, bndbox, annotation)
 
-            annotation.write('%s.xml' % line_dir)
-
-            with open('%s/data/ImageSets/train.txt' % target_dir, 'w') as write_f:
                 if image_name != last_image:
                     write_f.write('%s\n' % image_name.split(".")[0])
-            last_image = image_name
+                last_image = image_name
 
-            if not os.path.exists(
-                    '%s/data/Images/%s' %
-                    (target_dir, image_name)):
-                shutil.copy(
-                    '%s/%s' %
-                    (image_dir, image_name), ('%s/data/Images' %
-                                              target_dir))
+                if not os.path.exists(
+                        '%s/data/Images/%s' %
+                        (target_dir, image_name)):
+                    shutil.copy(
+                        '%s/%s' %
+                        (image_dir, image_name), ('%s/data/Images' %
+                                                target_dir))
