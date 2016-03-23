@@ -18,9 +18,7 @@ traffic_devkit_path = "/mnt/nvme/traffic-rcnn/"
 for split in ['train', 'test']:
     name = '{}_{}'.format('traffic', split)
     __sets[name] = (
-        lambda split=split: Traffic(
-            split, traffic_devkit_path))
-
+        lambda split=split: Traffic(split, traffic_devkit_path))
 
 def get_imdb(name):
     """Get an imdb (image database) by name."""

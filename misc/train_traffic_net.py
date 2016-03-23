@@ -12,7 +12,7 @@
 import _init_paths
 from fast_rcnn.train import get_training_roidb, train_net
 from fast_rcnn.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
-from datasets.factory import get_imdb
+from factory import get_imdb
 import datasets.imdb
 import caffe
 import argparse

@@ -13,10 +13,10 @@ import xml.etree.ElementTree as ET
 import datasets
 
 
-class Traffic(datasets.imdb):
+class Traffic(datasets.imdb.imdb):
 
     def __init__(self, image_set, devkit_path=None):
-        datasets.imdb.__init__(self, image_set)
+        super(Traffic, self).__init__(image_set)
         self._image_set = image_set
         self._devkit_path = devkit_path
         self._data_path = os.path.join(self._devkit_path, 'data')
@@ -26,7 +26,7 @@ class Traffic(datasets.imdb):
         self._image_ext = ['.jpg', '.png', '.bmp']
         self._image_index = self._load_image_set_index()
         # default to roidb handler
-        self._roidb_handler = self.selective_search_roidb
+        # self._roidb_handler = self.selective_search_roidb
 
         # Specific config options
         self.config = {'cleanup': True,
@@ -57,7 +57,7 @@ class Traffic(datasets.imdb):
 
     def _load_image_set_index(self):
         image_set_file = os.path.join(self._data_path, 'ImageSets',
-                                      self._image_set, '.txt')
+                                      "%s.%s" %(self._image_set, 'txt'))
         assert os.path.exists(image_set_file), \
             'path does not exist: {}'.format(image_set_file)
         with open(image_set_file) as f:
@@ -161,6 +161,7 @@ class Traffic(datasets.imdb):
         else:
             self.config['use_salt'] = True
             self.config['cleanup'] = True
+
 
 if __name__ == '__main__':
     d = datasets.dataset('train', '')
