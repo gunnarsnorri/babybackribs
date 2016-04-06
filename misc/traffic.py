@@ -1,7 +1,9 @@
 # ---------------------------------------
 #  Fast R-CNN
-#  For traffic signs
-#  written by Jonas Tornqvist
+#  Copyright (c) 2015 Microsoft
+#  Licensed under the MIT License [see LICENSE for details]
+#  Written by Ross Girshick
+#  Edited by Jonas Tornqvist & Gunnar Snorri Ragnarsson
 # -----------------------------------
 
 import cPickle
