@@ -18,9 +18,12 @@ if __name__ == "__main__":
     image_dir = args["imdir"]
     crop_dir = args["outdir"]
     last_image = None
+    if not os.path.exists(crop_dir):
+        os.mkdir(crop_dir)
     with open(txt_path) as read_f:
         for line in read_f:
             line = line.strip("\n")
+            line = line.replace(" ","")
             image_name = line.split(";")[0]
             line = line.split(";")
             image_path = ('%s/%s' % (image_dir, image_name))
