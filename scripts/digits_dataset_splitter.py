@@ -28,7 +28,11 @@ if __name__ == "__main__":
     if not os.path.exists(data_dir):
         os.mkdir(data_dir)
     train_dir = os.path.join(data_dir, 'train')
+    if not os.path.exists(train_dir):
+        os.mkdir(train_dir)
     val_dir = os.path.join(data_dir, 'val')
+    if not os.path.exists(val_dir):
+        os.mkdir(val_dir)
     with open(train_path) as read_f:
         for line in read_f:
             image_path, class_name, image_name = line_to_path(line)
