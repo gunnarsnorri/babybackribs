@@ -9,16 +9,19 @@
 
 """Train a Fast R-CNN network on a region of interest database."""
 
+import sys
+import os.path
+import os
 import _init_paths
 from fast_rcnn.train import get_training_roidb, train_net
-from fast_rcnn.config import cfg, cfg_from_file, cfg_from_list, get_output_dir
+from fast_rcnn.config import cfg, cfg_from_file, cfg_from_list
 from factory import get_imdb
 import datasets.imdb
 import caffe
 import argparse
 import pprint
 import numpy as np
-import sys
+
 
 def parse_args():
     """
@@ -57,6 +60,7 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+
 def combined_roidb(imdb_names):
     def get_roidb(imdb_name):
         imdb = get_imdb(imdb_name)
@@ -76,12 +80,24 @@ def combined_roidb(imdb_names):
         imdb = get_imdb(imdb_names)
     return imdb, roidb
 
+
+def get_output_dir(cfg, imdb):
+    if cfg.TRAIN.OUTPUT_DIR is not None:
+        output_dir = cfg.TRAIN.OUTPUT_DIR
+    else:
+        output_dir = os.path.join("/mnt/nvme/caffe_output/", imdb.name)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    return output_dir
+
+
 if __name__ == '__main__':
     args = parse_args()
 
     print('Called with args:')
     print(args)
 
+    cfg.TRAIN.OUTPUT_DIR = None
     if args.cfg_file is not None:
         cfg_from_file(args.cfg_file)
     if args.set_cfgs is not None:
@@ -104,7 +120,7 @@ if __name__ == '__main__':
     imdb, roidb = combined_roidb(args.imdb_name)
     print '{:d} roidb entries'.format(len(roidb))
 
-    output_dir = get_output_dir(imdb)
+    output_dir = get_output_dir(cfg, imdb)
     print 'Output will be saved to `{:s}`'.format(output_dir)
 
     train_net(args.solver, roidb, output_dir,

@@ -15,7 +15,7 @@ def add_path(path):
     if path not in sys.path:
         sys.path.insert(0, path)
 
-caffe_root = "/mnt/nvme/py-faster-rcnn/"
+caffe_root = "/mnt/nvme/py-faster-rcnn-2/"
 
 # Add caffe to PYTHONPATH
 caffe_path = osp.join(caffe_root, 'caffe-fast-rcnn', 'python')
