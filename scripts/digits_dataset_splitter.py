@@ -8,11 +8,19 @@ import argparse
 
 def line_to_path(line):
     line = line.strip("\n")
-    image_path = os.path.join(line.split(" ")[0]+line.split(" ")[1])
-    tmp = line.split(" ")[1]
-    class_name = tmp.split("/")[0]
-    image_name = tmp.split("/")[1]
+    image_path = os.path.join(line.split(" ")[0])
+    class_name = image_path.split("/")[-2]
+    image_name = image_path.split("/")[-1]
     return image_path, class_name, image_name
+
+def move_files(txt_path, dir_path):
+    with open(txt_path) as read_f:
+        for line in read_f:
+            image_path, class_name, image_name = line_to_path(line)
+            image_output = os.path.join(dir_path, class_name, image_name)
+            if not os.path.exists(os.path.join(dir_path, class_name)):
+                os.mkdir(os.path.join(dir_path, class_name))
+            shutil.copy(image_path, image_output)
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
@@ -33,10 +41,5 @@ if __name__ == "__main__":
     val_dir = os.path.join(data_dir, 'val')
     if not os.path.exists(val_dir):
         os.mkdir(val_dir)
-    with open(train_path) as read_f:
-        for line in read_f:
-            image_path, class_name, image_name = line_to_path(line)
-            image_output = os.path.join(train_dir, class_name, image_name)
-            if not os.path.exists(os.path.join(train_dir, class_name)):
-                os.mkdir(os.path.join(train_dir, class_name))
-            shutil.copy(image_path, image_output)
+    move_files(train_path, train_dir)
+    move_files(val_path, val_dir)
