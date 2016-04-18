@@ -1,4 +1,5 @@
-#Copyright (c) 2015-2016, NVIDIA CORPORATION.  All rights reserved.
+#!/usr/bin/env python
+# Copyright (c) 2015-2016, NVIDIA CORPORATION.  All rights reserved.
 
 """
 Classify an image using individual model files
@@ -14,12 +15,11 @@ from google.protobuf import text_format
 import numpy as np
 import PIL.Image
 import scipy.misc
-
-os.environ['GLOG_minloglevel'] = '2' # Suppress most caffe output
 import caffe
 from caffe.proto import caffe_pb2
 
-import sys
+os.environ['GLOG_minloglevel'] = '2'  # Suppress most caffe output
+
 
 def get_net(caffemodel, deploy_file, use_gpu=True):
     """
@@ -37,6 +37,7 @@ def get_net(caffemodel, deploy_file, use_gpu=True):
 
     # load a new model
     return caffe.Net(deploy_file, caffemodel, caffe.TEST)
+
 
 def get_transformer(deploy_file, mean_file=None):
     """
@@ -58,23 +59,24 @@ def get_transformer(deploy_file, mean_file=None):
         dims = network.input_dim[:4]
 
     t = caffe.io.Transformer(
-            inputs = {'data': dims}
+            inputs={'data': dims}
             )
-    t.set_transpose('data', (2,0,1)) # transpose to (channels, height, width)
+    t.set_transpose('data', (2, 0, 1))  # transpose to (channels, height, width)
 
     # color images
     if dims[1] == 3:
         # channel swap
-        t.set_channel_swap('data', (2,1,0))
+        t.set_channel_swap('data', (2, 1, 0))
 
     if mean_file:
         # set mean pixel
-        with open(mean_file,'rb') as infile:
+        with open(mean_file, 'rb') as infile:
             blob = caffe_pb2.BlobProto()
             blob.MergeFromString(infile.read())
             if blob.HasField('shape'):
                 blob_dims = blob.shape
-                assert len(blob_dims) == 4, 'Shape should have 4 dimensions - shape is "%s"' % blob.shape
+                assert len(
+                    blob_dims) == 4, 'Shape should have 4 dimensions - shape is "%s"' % blob.shape
             elif blob.HasField('num') and blob.HasField('channels') and \
                     blob.HasField('height') and blob.HasField('width'):
                 blob_dims = (blob.num, blob.channels, blob.height, blob.width)
@@ -84,6 +86,7 @@ def get_transformer(deploy_file, mean_file=None):
             t.set_mean('data', pixel)
 
     return t
+
 
 def load_image(path, height, width, mode='RGB'):
     """
@@ -107,6 +110,7 @@ def load_image(path, height, width, mode='RGB'):
     image = scipy.misc.imresize(image, (height, width), 'bilinear')
     return image
 
+
 def forward_pass(images, net, transformer, batch_size=None):
     """
     Returns scores for each image as an np.ndarray (nImages x nClasses)
@@ -126,14 +130,17 @@ def forward_pass(images, net, transformer, batch_size=None):
     caffe_images = []
     for image in images:
         if image.ndim == 2:
-            caffe_images.append(image[:,:,np.newaxis])
+            caffe_images.append(image[:, :, np.newaxis])
         else:
             caffe_images.append(image)
 
     dims = transformer.inputs['data'][1:]
 
     scores = None
-    for chunk in [caffe_images[x:x+batch_size] for x in xrange(0, len(caffe_images), batch_size)]:
+    for chunk in [
+        caffe_images[x: x + batch_size]
+        for x in xrange(0, len(caffe_images),
+                        batch_size)]:
         new_shape = (len(chunk),) + tuple(dims)
         if net.blobs['data'].data.shape != new_shape:
             net.blobs['data'].reshape(*new_shape)
@@ -150,6 +157,7 @@ def forward_pass(images, net, transformer, batch_size=None):
         print 'Processed %s/%s images in %f seconds ...' % (len(scores), len(caffe_images), (end - start))
 
     return scores
+
 
 def read_labels(labels_file):
     """
@@ -171,8 +179,9 @@ def read_labels(labels_file):
     assert len(labels), 'No labels found'
     return labels
 
+
 def classify(caffemodel, deploy_file, image_files,
-        mean_file=None, labels_file=None, batch_size=None, use_gpu=True):
+             mean_file=None, labels_file=None, batch_size=None, use_gpu=True):
     """
     Classify some images against a Caffe model and print the results
 
@@ -196,15 +205,16 @@ def classify(caffemodel, deploy_file, image_files,
         mode = 'L'
     else:
         raise ValueError('Invalid number for channels: %s' % channels)
-    images = [load_image(image_file, height, width, mode) for image_file in image_files]
+    images = [load_image(image_file, height, width, mode)
+              for image_file in image_files]
     labels = read_labels(labels_file)
 
     # Classify the image
     scores = forward_pass(images, net, transformer, batch_size=batch_size)
 
-    ### Process the results
+    # Process the results
 
-    indices = (-scores).argsort()[:, :5] # take top 5 results
+    indices = (-scores).argsort()[:, :5]  # take top 5 results
     classifications = []
     for image_index, index_list in enumerate(indices):
         result = []
@@ -214,14 +224,36 @@ def classify(caffemodel, deploy_file, image_files,
                 label = 'Class #%s' % i
             else:
                 label = labels[i]
-            result.append((label, round(100.0*scores[image_index, i],4)))
+            result.append((label, round(100.0*scores[image_index, i], 4)))
         classifications.append(result)
-'''
+    '''
     for index, classification in enumerate(classifications):
         print '{:-^80}'.format(' Prediction for %s ' % image_files[index])
         for label, confidence in classification:
             print '{:9.4%} - "{}"'.format(confidence/100.0, label)
         print
-'''
+    '''
+
     return classifications
 
+
+if __name__ == "__main__":
+
+    ap = argparse.ArgumentParser()
+    ap.add_argument("-p", "--prototxt", required=True, help="path to prototxt")
+    ap.add_argument("-d", "--model", required=True, help="path to model")
+    ap.add_argument("-i", "--image", required=True,
+                    help="path to image(s) directory")
+
+    args = vars(ap.parse_args())
+    deploy_file = args["prototxt"]
+    caffemodel = args["model"]
+    image_files = args["image"]
+
+    classifications = classify(caffemodel, deploy_file, image_files)
+
+    for index, classification in enumerate(classifications):
+        print '{:-^80}'.format(' Prediction for %s ' % image_files[index])
+        for label, confidence in classification:
+            print '{:9.4%} - "{}"'.format(confidence/100.0, label)
+        print
