@@ -41,9 +41,12 @@ NETS = {
         'zf': (
             'ZF',
             'ZF_faster_rcnn_final.caffemodel'),
-            'traffic': (
-                'models/VGG16_end2end/test.prototxt',
-                 '/mnt/nvme/caffe_output/train/vgg16_faster_rcnn_iter_10000.caffemodel')}
+        'pascal_voc': (
+            '/mnt/nvme/py-faster-rcnn/models/pascal_voc/VGG16/faster_rcnn_end2end/test.prototxt',
+            '/mnt/nvme/caffe_models/vgg16_pascal_voc_faster_rcnn_iter_70000.caffemodel'),
+        'traffic': (
+            'models/VGG16_end2end/test.prototxt',
+            '/mnt/nvme/caffe_output/train/vgg16_faster_rcnn_iter_20000.caffemodel')}
 
 
 def vis_detections(im, class_name, dets, thresh=0.5):
@@ -84,8 +87,6 @@ def demo(net, image_name):
 
     # Load the demo image
     im = cv2.imread(image_name)
-    import pdb; pdb.set_trace()  # XXX BREAKPOINT
-
 
     # Detect all object classes and regress object bounds
     timer = Timer()
@@ -96,8 +97,8 @@ def demo(net, image_name):
            '{:d} object proposals').format(timer.total_time, boxes.shape[0])
 
     # Visualize detections for each class
-    CONF_THRESH = 0.8
-    NMS_THRESH = 0.3
+    CONF_THRESH = 0.7
+    NMS_THRESH = 0.05
     for cls_ind, cls in enumerate(CLASSES[1:]):
         cls_ind += 1  # because we skipped background
         cls_boxes = boxes[:, 4*cls_ind:4*(cls_ind + 1)]
@@ -157,11 +158,11 @@ if __name__ == '__main__':
         _, _ = im_detect(net, im)
 
     im_dir = "/mnt/nvme/test_pics"
-    im_names = ["kors-%d.png" % i for i in range(1, 5)]
+    im_names = ["kors-%d.png" % i for i in range(1, 5)] + ["img.jpg"]
     im_names = [os.path.join(im_dir, img) for img in im_names]
     for im_name in im_names:
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        print 'Demo for data/demo/{}'.format(im_name)
+        print 'Demo for {}'.format(im_name)
         demo(net, im_name)
 
     plt.show()

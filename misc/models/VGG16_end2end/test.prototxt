@@ -551,7 +551,7 @@ layer {
   }
 }
 layer {
-  name: "cls_score"
+  name: "cls_score_new"
   type: "InnerProduct"
   bottom: "fc7"
   top: "cls_score"
@@ -564,7 +564,7 @@ layer {
     decay_mult: 0
   }
   inner_product_param {
-    num_output: 21
+    num_output: 2
     weight_filler {
       type: "gaussian"
       std: 0.01
@@ -576,7 +576,7 @@ layer {
   }
 }
 layer {
-  name: "bbox_pred"
+  name: "bbox_pred_new"
   type: "InnerProduct"
   bottom: "fc7"
   top: "bbox_pred"
