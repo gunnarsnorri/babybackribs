@@ -5,7 +5,7 @@ import argparse
 # import xml.etree.ElementTree as ET
 import lxml.etree as ET
 import shutil
-from PIL import Image
+import csv
 
 
 def add_object_xml(name, bndbox, annotation):
@@ -27,7 +27,13 @@ def add_object_xml(name, bndbox, annotation):
     return annotation
 
 
-def create_xml(folder_name, image_name, database, object_name, bndbox, img_size):
+def create_xml(
+    folder_name,
+    image_name,
+    database,
+    object_name,
+    bndbox,
+     img_size):
     annotation = ET.Element('annotation')
 
     folder = ET.SubElement(annotation, 'folder')
@@ -41,7 +47,7 @@ def create_xml(folder_name, image_name, database, object_name, bndbox, img_size)
     database_source.text = database
 
     annotation_source = ET.SubElement(source, 'annotation')
-    annotation_source.text = 'Traffic2016'
+    annotation_source.text = 'GTSRB2016'
 
     image_source = ET.SubElement(source, 'image')
     image_source.text = ''
@@ -56,9 +62,10 @@ def create_xml(folder_name, image_name, database, object_name, bndbox, img_size)
 
     return add_object_xml(object_name, bndbox, annotation)
 
-def bndbox_trans_check(bndbox,img_size):
 
-    bndbox = [int (s) for s in bndbox]
+def bndbox_trans_check(bndbox, img_size):
+
+    bndbox = [int(s) for s in bndbox]
     if bndbox[0] < 0:
         bndbox[0] = 0
     if bndbox[1] < 0:
@@ -73,66 +80,70 @@ def bndbox_trans_check(bndbox,img_size):
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("-t", "--txt", required=True,
-                    help="Path to the annotation txt")
     ap.add_argument("-o", "--outdir", required=True,
                     help="Path to the output directory")
-    ap.add_argument("-i", "--imdir", required=True,
-                    help="Path to the image directory")
+    ap.add_argument("-i", "--indir", required=True,
+                    help="Path to the root image directory")
     args = vars(ap.parse_args())
-    txt_dir = args["txt"]
     target_dir = args["outdir"]
-    image_dir = args["imdir"]
+    source_dir = args["indir"]
 
     if not os.path.exists(target_dir):
         os.makedirs('%s/data/Images' % target_dir)
         os.makedirs('%s/data/Annotations' % target_dir)
         os.makedirs('%s/data/ImageSets' % target_dir)
-    with open(txt_dir) as read_f:
-        # Can be changed to desired name of the database
-        database = 'traffic'
-        folder_name = image_dir.split("/")
-        folder_name = folder_name[-1]
-        with open('%s/data/ImageSets/train.txt' % target_dir, 'w') as write_f:
+    image_list = []
+    for class_name in os.listdir(source_dir):
+        class_dir = os.path.join(source_dir, class_name)
+        csvs = [os.path.join(class_dir, f)
+                for f in os.listdir(class_dir) if f.endswith(".csv")]
+        assert len(csvs) == 1
+        gt_filename = csvs[0]
+        with open(gt_filename) as gt_file:
+            gt_reader = csv.reader(gt_file, delimiter=";")
+            # Can be changed to desired name of the database
+            database = 'gtsrb'
+            folder_name = source_dir.split("/")[-1]
             last_image = None
-            for line in read_f:
-                line = line.strip("\n")
-                line = line.split(";")
-                image_name = line[0]
-                object_name = 'sign' #TODO fix annotation script + line[5]
-                bndbox = line[1:5]
-                line_dir = '%s/data/Annotations/%s.xml' % (target_dir, image_name.split(".")[0])
-                image_path = os.path.join(image_dir, image_name)
-                img = Image.open(image_path)
-                img_size = img.size + (3,)
-
+            gt_header = gt_reader.next()
+            for row in gt_reader:
+                image_name = row[0]
+                image_name_with_class = "%s_%s" % (class_name, row[0])
+                object_name = 'sign'  # TODO fix annotation script + row[8]
+                bndbox = row[3:7]
+                annotation_xml = os.path.join(target_dir, "data",
+                                                "Annotations",
+                                                "%s.xml" % image_name_with_class.split(".")[0])
+                img_size = [int(s) for s in row[1:3]]
+                img_size.append(3)
                 bndbox = bndbox_trans_check(bndbox, img_size)
-
-                if not os.path.exists(line_dir):
+                if not os.path.exists(annotation_xml):
                     annotation = create_xml(
-                        folder_name, image_name, database, object_name, bndbox,
-                    img_size)
+                        folder_name, image_name_with_class, database,
+                        object_name, bndbox, img_size)
                 else:
-                    tree = ET.parse(line_dir)
+                    tree = ET.parse(annotation_xml)
                     annotation = tree.getroot()
-                    annotation = add_object_xml(object_name, bndbox, annotation)
-
+                    annotation = add_object_xml(
+                        object_name, bndbox, annotation)
                 try:
                     tree = ET.ElementTree(annotation)
-                    tree.write(line_dir, pretty_print=True)
+                    tree.write(annotation_xml, pretty_print=True)
                 except:
-                    import pdb; pdb.set_trace()  # XXX BREAKPOINT
+                    import pdb
+                    pdb.set_trace()  # XXX BREAKPOINT
                     raise
-
-
                 if image_name != last_image:
-                    write_f.write('%s\n' % image_name.split(".")[0])
+                    image_list.append('%s\n' %
+                                    image_name_with_class.split(".")[0])
                 last_image = image_name
 
                 if not os.path.exists(
-                        '%s/data/Images/%s' %
-                        (target_dir, image_name)):
+                        os.path.join(target_dir, "data", "Images",
+                                        image_name_with_class)):
                     shutil.copy(
-                        '%s/%s' %
-                        (image_dir, image_name), ('%s/data/Images' %
-                                                target_dir))
+                        os.path.join(class_dir, image_name),
+                        os.path.join(target_dir, "data", "Images",
+                                        image_name_with_class))
+    with open('%s/data/ImageSets/train.txt' % target_dir, 'w') as write_f:
+        write_f.writelines(image_list)

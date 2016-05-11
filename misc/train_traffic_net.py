@@ -49,6 +49,9 @@ def parse_args():
     parser.add_argument('--rand', dest='randomize',
                         help='randomize (do not use a fixed seed)',
                         action='store_true')
+    parser.add_argument('--run-name', dest='run_name',
+                        help='Name of output dir folder',
+                        default="", type=str)
     parser.add_argument('--set', dest='set_cfgs',
                         help='set config keys', default=None,
                         nargs=argparse.REMAINDER)
@@ -81,17 +84,18 @@ def combined_roidb(imdb_names):
     return imdb, roidb
 
 
-def get_output_dir(cfg, imdb):
+def get_output_dir(cfg, imdb, run_name):
     if cfg.TRAIN.OUTPUT_DIR is not None:
         output_dir = cfg.TRAIN.OUTPUT_DIR
     else:
-        output_dir = os.path.join("/mnt/nvme/caffe_output/", imdb.name)
+        output_dir = os.path.join("/mnt/nvme/caffe_output", run_name, imdb.name)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
     return output_dir
 
 
 if __name__ == '__main__':
+
     args = parse_args()
 
     print('Called with args:')
@@ -104,6 +108,13 @@ if __name__ == '__main__':
         cfg_from_list(args.set_cfgs)
 
     cfg.GPU_ID = args.gpu_id
+
+    cache_file = os.path.abspath(
+        os.path.join(cfg.DATA_DIR, 'cache',
+                     args.imdb_name.split("_")[1] + '_gt_roidb.pkl'))
+    if os.path.exists(cache_file):
+        print("Removing cache file : %s" % cache_file)
+        os.remove(cache_file)
 
     print('Using config:')
     pprint.pprint(cfg)
@@ -120,7 +131,7 @@ if __name__ == '__main__':
     imdb, roidb = combined_roidb(args.imdb_name)
     print '{:d} roidb entries'.format(len(roidb))
 
-    output_dir = get_output_dir(cfg, imdb)
+    output_dir = get_output_dir(cfg, imdb, args.run_name)
     print 'Output will be saved to `{:s}`'.format(output_dir)
 
     train_net(args.solver, roidb, output_dir,

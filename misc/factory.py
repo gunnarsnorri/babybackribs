@@ -14,11 +14,17 @@ __sets = {}
 # Set up traffic
 # path to devkit example '/home/szy/INRIA'
 traffic_devkit_path = "/mnt/nvme/traffic-rcnn/"
+gtsrb_devkit_path = "/mnt/nvme/gtsrb-rcnn/"
 
 for split in ['train', 'test']:
     name = '{}_{}'.format('traffic', split)
     __sets[name] = (
         lambda split=split: Traffic(split, traffic_devkit_path))
+
+for split in ['train', 'test']:
+    name = '{}_{}'.format('gtsrb', split)
+    __sets[name] = (
+        lambda split=split: Traffic(split, gtsrb_devkit_path))
 
 def get_imdb(name):
     """Get an imdb (image database) by name."""

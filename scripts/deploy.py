@@ -244,11 +244,20 @@ if __name__ == "__main__":
     ap.add_argument("-d", "--model", required=True, help="path to model")
     ap.add_argument("-i", "--image", required=True,
                     help="path to image(s) directory")
+    ap.add_argument("-if", "--imagefile", required=False, default=None,
+                    help="path to image(s) directory")
 
     args = vars(ap.parse_args())
     deploy_file = args["prototxt"]
     caffemodel = args["model"]
     image_files = args["image"]
+    image_file = args["imagefile"]
+    if image_file:
+        with open(image_file, "r") as im_file:
+            image_files = []
+            for line in im_file:
+                image_files.append(line.rstrip("\n"))
+
 
     classifications = classify(caffemodel, deploy_file, image_files)
 

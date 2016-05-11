@@ -25,28 +25,42 @@ import os
 import cv2
 import argparse
 
-# CLASSES = ('__background__',
-#            'aeroplane', 'bicycle', 'bird', 'boat',
-#            'bottle', 'bus', 'car', 'cat', 'chair',
-#            'cow', 'diningtable', 'dog', 'horse',
-#            'motorbike', 'person', 'pottedplant',
-#            'sheep', 'sofa', 'train', 'tvmonitor')
-
-CLASSES = ('__background__',
-           'sign')
 NETS = {
-    'vgg16': (
-        'VGG16',
-        'VGG16_faster_rcnn_final.caffemodel'),
-        'zf': (
-            'ZF',
-            'ZF_faster_rcnn_final.caffemodel'),
-        'pascal_voc': (
-            '/mnt/nvme/py-faster-rcnn/models/pascal_voc/VGG16/faster_rcnn_end2end/test.prototxt',
-            '/mnt/nvme/caffe_models/vgg16_pascal_voc_faster_rcnn_iter_70000.caffemodel'),
-        'traffic': (
+    'pascal_voc': (
+        '/mnt/nvme/py-faster-rcnn-3/models/pascal_voc/VGG16/faster_rcnn_end2end/test.prototxt',
+        ('__background__',
+         'aeroplane',
+         'bicycle',
+         'bird',
+         'boat',
+         'bottle',
+         'bus',
+         'car',
+         'cat',
+         'chair',
+         'cow',
+         'diningtable',
+         'dog',
+         'horse',
+         'motorbike',
+         'person',
+         'pottedplant',
+         'sheep',
+         'sofa',
+         'train',
+         'tvmonitor')),
+    'traffic': (
             'models/VGG16_end2end/test.prototxt',
-            '/mnt/nvme/caffe_output/train/vgg16_faster_rcnn_iter_20000.caffemodel')}
+            ('__background__',
+             'sign')),
+    'traffic_original': (
+            'models/VGG16_end2end_original/test.prototxt',
+            ('__background__',
+             'sign')),
+    'alt_opt': (
+            'models/VGG16_alt_opt/faster_rcnn_test.pt',
+            ('__background__',
+             'sign'))}
 
 
 def vis_detections(im, class_name, dets, thresh=0.5):
@@ -82,7 +96,7 @@ def vis_detections(im, class_name, dets, thresh=0.5):
     plt.draw()
 
 
-def demo(net, image_name):
+def demo(net, image_name, classes):
     """Detect object classes in an image using pre-computed object proposals."""
 
     # Load the demo image
@@ -97,9 +111,9 @@ def demo(net, image_name):
            '{:d} object proposals').format(timer.total_time, boxes.shape[0])
 
     # Visualize detections for each class
-    CONF_THRESH = 0.7
-    NMS_THRESH = 0.05
-    for cls_ind, cls in enumerate(CLASSES[1:]):
+    CONF_THRESH = 0.5
+    NMS_THRESH = 0.9
+    for cls_ind, cls in enumerate(classes[1:]):
         cls_ind += 1  # because we skipped background
         cls_boxes = boxes[:, 4*cls_ind:4*(cls_ind + 1)]
         cls_scores = scores[:, cls_ind]
@@ -120,6 +134,8 @@ def parse_args():
                         action='store_true')
     parser.add_argument('--net', dest='demo_net', help='Network to use [vgg16]',
                         choices=NETS.keys(), default='vgg16')
+    parser.add_argument('--model', dest='demo_model', help='Model to use',
+                        required=True)
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
                         default=None, type=str)
@@ -133,7 +149,8 @@ if __name__ == '__main__':
     args = parse_args()
 
     prototxt = NETS[args.demo_net][0]
-    caffemodel = NETS[args.demo_net][1]
+    classes = NETS[args.demo_net][1]
+    caffemodel = args.demo_model
 
     if not os.path.isfile(caffemodel):
         raise IOError(('{:s} not found.\nDid you run ./data/script/'
@@ -163,6 +180,6 @@ if __name__ == '__main__':
     for im_name in im_names:
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
         print 'Demo for {}'.format(im_name)
-        demo(net, im_name)
+        demo(net, im_name, classes)
 
     plt.show()

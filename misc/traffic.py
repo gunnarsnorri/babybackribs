@@ -17,13 +17,13 @@ import scipy.sparse
 import cPickle
 # import subprocess
 import uuid
-from voc_eval import voc_eval
+from datasets.voc_eval import voc_eval
 # from fast_rcnn.config import cfg
 
 
 class Traffic(imdb):
 
-    def __init__(self, image_set, devkit_path=None):
+    def __init__(self, image_set, devkit_path):
         super(Traffic, self).__init__(image_set)
         self._image_set = image_set
         self._devkit_path = devkit_path
@@ -31,7 +31,7 @@ class Traffic(imdb):
         self._classes = ('__background__',  # always index 0
                          'sign')
         self._class_to_ind = dict(zip(self.classes, xrange(self.num_classes)))
-        self._image_exts = ['.jpg', '.png', '.bmp']
+        self._image_exts = ['.jpg', '.png', '.bmp', '.ppm']
         self._image_index = self._load_image_set_index()
         # Default to roidb handler
         self._roidb_handler = self.selective_search_roidb
@@ -91,6 +91,7 @@ class Traffic(imdb):
         This function loads/saves from/to a cache file to speed up future calls.
         """
         cache_file = os.path.join(self.cache_path, self.name + '_gt_roidb.pkl')
+        # TODO: FIX cache annoyance
         if os.path.exists(cache_file):
             with open(cache_file, 'rb') as fid:
                 roidb = cPickle.load(fid)
@@ -322,3 +323,24 @@ class Traffic(imdb):
         else:
             self.config['use_salt'] = True
             self.config['cleanup'] = True
+
+    def append_flipped_images(self):
+        num_images = self.num_images
+        widths = self._get_widths()
+        for i in xrange(num_images):
+            boxes = self.roidb[i]['boxes'].copy()
+            oldx1 = boxes[:, 0].copy()
+            oldx2 = boxes[:, 2].copy()
+            boxes[:, 0] = widths[i] - oldx2
+            boxes[:, 2] = widths[i] - oldx1
+            try:
+                assert (boxes[:, 2] >= boxes[:, 0]).all()
+            except AssertionError:
+                import pdb; pdb.set_trace()  # XXX BREAKPOINT
+                raise
+            entry = {'boxes': boxes,
+                     'gt_overlaps': self.roidb[i]['gt_overlaps'],
+                     'gt_classes': self.roidb[i]['gt_classes'],
+                     'flipped': True}
+            self.roidb.append(entry)
+        self._image_index = self._image_index * 2
