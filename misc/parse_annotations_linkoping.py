@@ -3,7 +3,15 @@
 import os
 import os.path
 import argparse
-import pdb
+
+def get_coords(_object):
+    points = []
+    for point in _object[1:5]:
+        point = point.replace("l", "")
+        points.append(int(round(float(point))))
+    return tuple((points[i] for i in (2, 3, 0, 1)))
+
+
 
 if __name__ == "__main__":
 
@@ -22,7 +30,6 @@ if __name__ == "__main__":
     with open(txt_dir) as read_f:
         with open('%s/Annotations.txt' % target_dir, 'w') as write_f:
             for line in read_f:
-                # pdb.set_trace()
                 line = line.strip("\r\n")
                 line = line.strip(" ")
                 image_name = line.split(":")[0]
@@ -30,13 +37,10 @@ if __name__ == "__main__":
                     image_info = line.split(":")[1]
                     image_info = image_info.split(";")
                     del image_info[-1:]
-                    objects = [x.split(",") for x in image_info]
+                    objects = [x.split(", ") for x in image_info]
                     for _object in objects:
                         if len(_object) > 1:
-                            xmax = int(round(float(_object[1])))
-                            ymax = int(round(float(_object[2])))
-                            xmin = int(round(float(_object[3])))
-                            ymin = int(round(float(_object[4])))
+                            points = get_coords(_object)
                             write_f.write(
                                 '%s;%s;%s;%s;%s;%s\n' %
-                                (image_name, xmin, ymin, xmax, ymax, _object[6]))
+                                ((image_name,) + points + (_object[6],)))

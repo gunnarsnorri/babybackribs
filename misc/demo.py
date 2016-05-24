@@ -57,8 +57,35 @@ NETS = {
             'models/VGG16_end2end_original/test.prototxt',
             ('__background__',
              'sign')),
+    'traffic_multi_class': (
+            'models/VGG16_end2end_multi_class/test.prototxt',
+            ('__background__',
+             '30_SIGN',
+             '50_SIGN',
+             '60_SIGN',
+             '70_SIGN',
+             '80_SIGN',
+             '90_SIGN',
+             '100_SIGN',
+             '110_SIGN',
+             '120_SIGN',
+             'GIVE_WAY',
+             'NO_PARKING',
+             'NO_STOPPING_NO_STANDING',
+             'OTHER',
+             'PASS_EITHER_SIDE',
+             'PASS_LEFT_SIDE',
+             'PASS_RIGHT_SIDE',
+             'PEDESTRIAN_CROSSING',
+             'PRIORITY_ROAD',
+             'STOP',
+             'URDBL')),
     'alt_opt': (
             'models/VGG16_alt_opt/faster_rcnn_test.pt',
+            ('__background__',
+             'sign')),
+    'ZF': (
+            'models/ZF_end2end/test.prototxt',
             ('__background__',
              'sign'))}
 
@@ -112,7 +139,7 @@ def demo(net, image_name, classes):
 
     # Visualize detections for each class
     CONF_THRESH = 0.5
-    NMS_THRESH = 0.9
+    NMS_THRESH = 0.01
     for cls_ind, cls in enumerate(classes[1:]):
         cls_ind += 1  # because we skipped background
         cls_boxes = boxes[:, 4*cls_ind:4*(cls_ind + 1)]

@@ -12,6 +12,8 @@
 import sys
 import os.path
 import os
+import shutil
+import yaml
 import _init_paths
 from fast_rcnn.train import get_training_roidb, train_net
 from fast_rcnn.config import cfg, cfg_from_file, cfg_from_list
@@ -94,6 +96,17 @@ def get_output_dir(cfg, imdb, run_name):
     return output_dir
 
 
+def get_train_file(solver):
+    with open(solver, "r") as solver_file:
+        for line in solver_file:
+            if line.startswith("train_net:"):
+                train_filename = line.strip("\n").split(":")[1]
+                train_filename = train_filename.strip().strip('"')
+                return train_filename
+    raise KeyError("train_net not found in %s" % solver)
+
+
+
 if __name__ == '__main__':
 
     args = parse_args()
@@ -111,7 +124,7 @@ if __name__ == '__main__':
 
     cache_file = os.path.abspath(
         os.path.join(cfg.DATA_DIR, 'cache',
-                     args.imdb_name.split("_")[1] + '_gt_roidb.pkl'))
+                     args.imdb_name.split("_")[-1] + '_gt_roidb.pkl'))
     if os.path.exists(cache_file):
         print("Removing cache file : %s" % cache_file)
         os.remove(cache_file)
@@ -133,6 +146,16 @@ if __name__ == '__main__':
 
     output_dir = get_output_dir(cfg, imdb, args.run_name)
     print 'Output will be saved to `{:s}`'.format(output_dir)
+
+    # Write relevant information to output_dir for documentation
+    with open(os.path.join(output_dir, "config.yml"), "w") as conf_file:
+        conf_file.write(yaml.dump(cfg))
+    shutil.copy(args.solver, output_dir)
+    train_file = get_train_file(args.solver)
+    shutil.copy(train_file, output_dir)
+    with open(os.path.join(output_dir, "extra_info.txt"), "w") as extra_file:
+        extra_file.write("%s\n" % args.pretrained_model)
+        extra_file.write("%s\n" % args.imdb_name)
 
     train_net(args.solver, roidb, output_dir,
               pretrained_model=args.pretrained_model,

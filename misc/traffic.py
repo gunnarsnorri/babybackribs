@@ -17,20 +17,18 @@ import scipy.sparse
 import cPickle
 # import subprocess
 import uuid
-from datasets.voc_eval import voc_eval
+from traffic_eval import traffic_eval
 # from fast_rcnn.config import cfg
 
 
 class Traffic(imdb):
 
-    def __init__(self, image_set, devkit_path):
-        super(Traffic, self).__init__(image_set)
-        self._image_set = image_set
+    def __init__(self, name, devkit_path):
+        super(Traffic, self).__init__(name)
         self._devkit_path = devkit_path
         self._data_path = os.path.join(self._devkit_path, 'data')
         self._classes = ('__background__',  # always index 0
                          'sign')
-        self._class_to_ind = dict(zip(self.classes, xrange(self.num_classes)))
         self._image_exts = ['.jpg', '.png', '.bmp', '.ppm']
         self._image_index = self._load_image_set_index()
         # Default to roidb handler
@@ -57,6 +55,10 @@ class Traffic(imdb):
         """
         return self.image_path_from_index(self._image_index[i])
 
+    @property
+    def class_to_ind(self):
+        return dict(zip(self.classes, xrange(self.num_classes)))
+
     def image_path_from_index(self, index):
         for ext in self._image_exts:
             image_path = os.path.join(self._data_path, 'Images',
@@ -71,7 +73,7 @@ class Traffic(imdb):
         # Example path to image set file:
         # self._devkit_path + /VOCdevkit2007/VOC2007/ImageSets/Main/val.txt
         image_set_file = os.path.join(self._data_path, 'ImageSets',
-                                      self._image_set + '.txt')
+                                      self.name + '.txt')
         assert os.path.exists(image_set_file), \
             'Path does not exist: {}'.format(image_set_file)
         with open(image_set_file) as f:
@@ -122,7 +124,7 @@ class Traffic(imdb):
             print '{} ss roidb loaded from {}'.format(self.name, cache_file)
             return roidb
 
-        if self._image_set != "test":
+        if self.name != "test":
             gt_roidb = self.gt_roidb()
             ss_roidb = self._load_selective_search_roidb(gt_roidb)
             roidb = imdb.merge_roidbs(gt_roidb, ss_roidb)
@@ -135,7 +137,7 @@ class Traffic(imdb):
         return roidb
 
     def rpn_roidb(self):
-        if self._image_set != "test":
+        if self.name != "test":
             gt_roidb = self.gt_roidb()
             ss_roidb = self._load_selective_search_roidb(gt_roidb)
             roidb = imdb.merge_roidbs(gt_roidb, ss_roidb)
@@ -195,9 +197,8 @@ class Traffic(imdb):
             y1 = float(bbox.find('ymin').text)
             x2 = float(bbox.find('xmax').text)
             y2 = float(bbox.find('ymax').text)
-            # Dont know what dict, zip and xrange
-            cls = self._class_to_ind['sign']
-            # does in the original call in _class_to_ind
+            class_name = obj.find('name').text
+            cls = self.class_to_ind[class_name]
             boxes[ix, :] = [x1, y1, x2, y2]
             gt_classes[ix] = cls
             overlaps[ix, cls] = 1.0
@@ -217,9 +218,9 @@ class Traffic(imdb):
         return comp_id
 
     def _get_results_file_template(self):
-        filename = self._get_comp_id() + '_det_' + self._image_set + '_{:s}.txt'
+        filename = self._get_comp_id() + '_det_' + self.name + '_{:s}.txt'
         path = os.path.join(
-            self._data_path,
+            self._devkit_path,
             'results',
             filename)
         return path
@@ -231,17 +232,12 @@ class Traffic(imdb):
         if use_salt:
             comp_id += '_{}'.format(os.getpid())  # diff between
             # - and _ in inria and original?
-        path = os.path.join(
-            self._devkit_path,
-            'results',
-            self.name,
-            comp_id + '_')
 
         for cls_ind, cls in enumerate(self.classes):
             if cls == '__background__':
-                continue  # assumes continue skips this iteration of the loop.
+                continue
             print 'Writing {} results file'.format(cls)
-            filename = path + 'det_' + self._image_set + '_' + cls + '.txt'
+            filename = self._get_results_file_template().format(cls)
             with open(filename, 'wt') as f:
                 for im_ind, index in enumerate(self.image_index):
                     dets = all_boxes[cls_ind][im_ind]
@@ -258,27 +254,24 @@ class Traffic(imdb):
         annopath = os.path.join(
             self._data_path, 'Annotations', '{:s}.xml')
         imagesetfile = os.path.join(
-            self._data_path, 'ImageSets', 'train.txt')
-        cachedir = os.path.join(self._data_path, 'annotations_cache')
+            self._data_path, 'ImageSets', '%s.txt' % self.name)
         aps = []
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
-        for i, cls in enumerate(self._classes):
+        for i, cls in enumerate(self.classes):
             if cls == '__background__':
                 continue
             filename = self._get_results_file_template().format(cls)
             try:
-                rec, prec, ap = voc_eval(
+                rec, prec, ap = traffic_eval(
                     filename,
                     annopath,
                     imagesetfile,
                     cls,
-                    cachedir,
-                    ovthresh=0.5,
-                    use_07_metric=False)
+                    ovthresh=0.5)
             except IOError:
                 continue
-            aps += [ap]
+            aps.append([ap])
 
             print('{:.3f}'.format(ap))
         print('{:.3f}'.format(np.mean(aps)))
@@ -302,15 +295,15 @@ class Traffic(imdb):
     #     cmd += '-r "dbstop if error; '
     #     cmd += 'voc_eval(\'{:s}\',\'{:s}\',\'{:s}\',\'{:s}\'); quit;"' \
     #            .format(self._devkit_path, self._get_comp_id(),
-    #                    self._image_set, output_dir)
+    #                    self.name, output_dir)
     #     print('Running:\n{}'.format(cmd))
     #     status = subprocess.call(cmd, shell=True)
 
     def evaluate_detections(self, all_boxes, output_dir):
-        self._write_voc_results_file(all_boxes)
+        self._write_dataset_results_file(all_boxes)
         self._do_python_eval(output_dir)
         if self.config['cleanup']:
-            for cls in self._classes:
+            for cls in self.classes:
                 if cls == '__background__':
                     continue
                 filename = self._get_results_file_template().format(cls)
@@ -336,7 +329,8 @@ class Traffic(imdb):
             try:
                 assert (boxes[:, 2] >= boxes[:, 0]).all()
             except AssertionError:
-                import pdb; pdb.set_trace()  # XXX BREAKPOINT
+                import pdb
+                pdb.set_trace()  # XXX BREAKPOINT
                 raise
             entry = {'boxes': boxes,
                      'gt_overlaps': self.roidb[i]['gt_overlaps'],
@@ -344,3 +338,32 @@ class Traffic(imdb):
                      'flipped': True}
             self.roidb.append(entry)
         self._image_index = self._image_index * 2
+
+
+class TrafficMultiClass(Traffic):
+
+    def __init__(self, name, devkit_path):
+        super(TrafficMultiClass, self).__init__(name, devkit_path)
+        self._classes = (
+            '__background__',
+            '30_SIGN',
+            '50_SIGN',
+            '60_SIGN',
+            '70_SIGN',
+            '80_SIGN',
+            '90_SIGN',
+            '100_SIGN',
+            '110_SIGN',
+            '120_SIGN',
+            'GIVE_WAY',
+            'NO_PARKING',
+            'NO_STOPPING_NO_STANDING',
+            'OTHER',
+            'PASS_EITHER_SIDE',
+            'PASS_LEFT_SIDE',
+            'PASS_RIGHT_SIDE',
+            'PEDESTRIAN_CROSSING',
+            'PRIORITY_ROAD',
+            'STOP',
+            'URDBL'
+        )

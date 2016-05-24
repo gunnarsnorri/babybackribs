@@ -79,10 +79,13 @@ if __name__ == "__main__":
                     help="Path to the output directory")
     ap.add_argument("-i", "--imdir", required=True,
                     help="Path to the image directory")
+    ap.add_argument("-n", "--set_name", required=True,
+                    help="Path to the image directory")
     args = vars(ap.parse_args())
     txt_dir = args["txt"]
     target_dir = args["outdir"]
     image_dir = args["imdir"]
+    set_name = args["set_name"]
 
     if not os.path.exists(target_dir):
         os.makedirs('%s/data/Images' % target_dir)
@@ -93,14 +96,14 @@ if __name__ == "__main__":
         database = 'traffic'
         folder_name = image_dir.split("/")
         folder_name = folder_name[-1]
-        with open('%s/data/ImageSets/train.txt' % target_dir, 'w') as write_f:
+        with open('%s/data/ImageSets/%s.txt' % (target_dir, set_name), 'w') as write_f:
             last_image = None
             for line in read_f:
                 line = line.strip("\n")
                 line = line.split(";")
                 image_name = line[0]
-                object_name = 'sign' #TODO fix annotation script + line[5]
                 bndbox = line[1:5]
+                object_name = line[5]
                 line_dir = '%s/data/Annotations/%s.xml' % (target_dir, image_name.split(".")[0])
                 image_path = os.path.join(image_dir, image_name)
                 img = Image.open(image_path)

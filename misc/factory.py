@@ -4,7 +4,7 @@
 # Licensed under The MIT License [see LICENSE for details]
 # Written by Ross Girshick
 # --------------------------------------------------------
-from traffic import Traffic
+from traffic import Traffic, TrafficMultiClass
 
 """Factory method for easily getting imdbs by name."""
 
@@ -14,17 +14,25 @@ __sets = {}
 # Set up traffic
 # path to devkit example '/home/szy/INRIA'
 traffic_devkit_path = "/mnt/nvme/traffic-rcnn/"
+traffic_multi_class_devkit_path = "/mnt/nvme/traffic-multiclass/"
 gtsrb_devkit_path = "/mnt/nvme/gtsrb-rcnn/"
 
-for split in ['train', 'test']:
+for split in ['train', 'test', 'test2']:
     name = '{}_{}'.format('traffic', split)
     __sets[name] = (
         lambda split=split: Traffic(split, traffic_devkit_path))
 
 for split in ['train', 'test']:
+    name = '{}_{}'.format('traffic_multi_class', split)
+    __sets[name] = (
+        lambda split=split: TrafficMultiClass(
+            split, traffic_multi_class_devkit_path))
+
+for split in ['train', 'test']:
     name = '{}_{}'.format('gtsrb', split)
     __sets[name] = (
         lambda split=split: Traffic(split, gtsrb_devkit_path))
+
 
 def get_imdb(name):
     """Get an imdb (image database) by name."""
