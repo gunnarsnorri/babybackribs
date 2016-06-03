@@ -66,7 +66,6 @@ def traffic_eval(detpath,
     imagesetfile: Text file containing the list of images, one image per line.
     classname: Category name (duh)
     [ovthresh]: Overlap threshold (default = 0.5)
-        (default False)
     """
     # assumes detections are in detpath.format(classname)
     # assumes annotations are in annopath.format(imagename)
@@ -107,6 +106,9 @@ def traffic_eval(detpath,
     confidence = np.array([float(x[1]) for x in splitlines])
     BB = np.array([[float(z) for z in x[2:]] for x in splitlines])
 
+    if len(BB) == 0 and classname in ["110_SIGN", "120_SIGN", "60_SIGN",
+                                      "90_SIGN", "PASS_LEFT_SIDE", "URDBL"]:
+        return None, None, None
     # sort by confidence
     sorted_ind = np.argsort(-confidence)
     sorted_scores = np.sort(-confidence)
@@ -155,8 +157,8 @@ def traffic_eval(detpath,
     # compute precision recall
     fp = np.cumsum(fp)
     tp = np.cumsum(tp)
-    print(tp)
-    print(npos)
+    if not npos:
+        return None, None, None
     rec = tp / float(npos)
     # avoid divide by zero in case the first detection matches a difficult
     # ground truth

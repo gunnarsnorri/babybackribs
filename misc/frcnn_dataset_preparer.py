@@ -8,10 +8,12 @@ import shutil
 from PIL import Image
 
 
-def add_object_xml(name, bndbox, annotation):
+def add_object_xml(name, bndbox, annotation, extra_class):
     _object = ET.SubElement(annotation, 'object')
     _object_name = ET.SubElement(_object, 'name')
     _object_name.text = name
+    _object_class = ET.SubElement(_object, "class")
+    _object_class.text = extra_class
 
     _object_bndbox = ET.SubElement(_object, 'bndbox')
     xmin = ET.SubElement(_object_bndbox, 'xmin')
@@ -27,7 +29,7 @@ def add_object_xml(name, bndbox, annotation):
     return annotation
 
 
-def create_xml(folder_name, image_name, database, object_name, bndbox, img_size):
+def create_xml(folder_name, image_name, database, img_size):
     annotation = ET.Element('annotation')
 
     folder = ET.SubElement(annotation, 'folder')
@@ -54,7 +56,7 @@ def create_xml(folder_name, image_name, database, object_name, bndbox, img_size)
     size_height.text = str(img_size[1])
     size_depth.text = str(img_size[2])
 
-    return add_object_xml(object_name, bndbox, annotation)
+    return annotation
 
 def bndbox_trans_check(bndbox,img_size):
 
@@ -103,7 +105,8 @@ if __name__ == "__main__":
                 line = line.split(";")
                 image_name = line[0]
                 bndbox = line[1:5]
-                object_name = line[5]
+                object_name = "sign"
+                extra_class = line[5]
                 line_dir = '%s/data/Annotations/%s.xml' % (target_dir, image_name.split(".")[0])
                 image_path = os.path.join(image_dir, image_name)
                 img = Image.open(image_path)
@@ -113,12 +116,12 @@ if __name__ == "__main__":
 
                 if not os.path.exists(line_dir):
                     annotation = create_xml(
-                        folder_name, image_name, database, object_name, bndbox,
-                    img_size)
+                        folder_name, image_name, database, img_size)
                 else:
                     tree = ET.parse(line_dir)
                     annotation = tree.getroot()
-                    annotation = add_object_xml(object_name, bndbox, annotation)
+                annotation = add_object_xml(object_name, bndbox,
+                                            annotation, extra_class)
 
                 try:
                     tree = ET.ElementTree(annotation)

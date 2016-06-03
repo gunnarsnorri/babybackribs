@@ -551,7 +551,7 @@ layer {
   }
 }
 layer {
-  name: "cls_score_new"
+  name: "cls_score"
   type: "InnerProduct"
   bottom: "fc7"
   top: "cls_score"
@@ -576,7 +576,7 @@ layer {
   }
 }
 layer {
-  name: "bbox_pred_new"
+  name: "bbox_pred"
   type: "InnerProduct"
   bottom: "fc7"
   top: "bbox_pred"

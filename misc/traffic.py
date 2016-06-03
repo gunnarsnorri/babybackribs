@@ -271,9 +271,12 @@ class Traffic(imdb):
                     ovthresh=0.5)
             except IOError:
                 continue
-            aps.append([ap])
+            if ap is not None:
+                aps.append([ap])
+                print('{:.3f}'.format(ap))
+            else:
+                print("No AP for class %s" % cls)
 
-            print('{:.3f}'.format(ap))
         print('{:.3f}'.format(np.mean(aps)))
         print('~~~~~~~~')
         print('')
