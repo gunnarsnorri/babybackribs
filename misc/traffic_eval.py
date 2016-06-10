@@ -9,6 +9,7 @@ import os
 import cPickle
 import numpy as np
 
+
 def parse_rec(filename):
     """ Parse a Traffic xml file """
     tree = ET.parse(filename)
@@ -21,9 +22,12 @@ def parse_rec(filename):
                               int(bbox.find('ymin').text),
                               int(bbox.find('xmax').text),
                               int(bbox.find('ymax').text)]
+        obj_struct['class'] = obj.find('class').text
         objects.append(obj_struct)
 
+
     return objects
+
 
 def traffic_ap(rec, prec):
     """ ap = traffic_ap(rec, prec)
@@ -46,11 +50,34 @@ def traffic_ap(rec, prec):
     ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
     return ap
 
+def get_max_overlap(BBGT, bb):
+    """Returns the maximum overlap and its index for bounding box bb and
+    ground truth bounding boxes BBGT for that image"""
+    # compute overlaps
+    # intersection
+    ixmin = np.maximum(BBGT[:, 0], bb[0])
+    iymin = np.maximum(BBGT[:, 1], bb[1])
+    ixmax = np.minimum(BBGT[:, 2], bb[2])
+    iymax = np.minimum(BBGT[:, 3], bb[3])
+    iw = np.maximum(ixmax - ixmin + 1., 0.)
+    ih = np.maximum(iymax - iymin + 1., 0.)
+    inters = iw * ih
+
+    # union
+    uni = ((bb[2] - bb[0] + 1.) * (bb[3] - bb[1] + 1.) +
+            (BBGT[:, 2] - BBGT[:, 0] + 1.) *
+            (BBGT[:, 3] - BBGT[:, 1] + 1.) - inters)
+
+    overlaps = inters / uni
+    ovmax = np.max(overlaps)
+    jmax = np.argmax(overlaps)
+    return ovmax, jmax
+
 def traffic_eval(detpath,
-             annopath,
-             imagesetfile,
-             classname,
-             ovthresh=0.5):
+                 annopath,
+                 imagesetfile,
+                 classname,
+                 ovthresh=0.5):
     """rec, prec, ap = traffic_eval(detpath,
                                 annopath,
                                 imagesetfile,
@@ -104,15 +131,23 @@ def traffic_eval(detpath,
     splitlines = [x.strip().split(' ') for x in lines]
     image_ids = [x[0] for x in splitlines]
     confidence = np.array([float(x[1]) for x in splitlines])
-    BB = np.array([[float(z) for z in x[2:]] for x in splitlines])
+    BB = np.array([[float(z) for z in x[2:6]] for x in splitlines])
 
-    if len(BB) == 0 and classname in ["110_SIGN", "120_SIGN", "60_SIGN",
-                                      "90_SIGN", "PASS_LEFT_SIDE", "URDBL"]:
+    n_recs = len([class_recs[imagename]
+                  for imagename in imagenames if class_recs[imagename]["det"]])
+    if len(BB) == 0 and n_recs == 0:
         return None, None, None
+
     # sort by confidence
     sorted_ind = np.argsort(-confidence)
     sorted_scores = np.sort(-confidence)
-    BB = BB[sorted_ind, :]
+    try:
+        BB = BB[sorted_ind, :]
+    except IndexError:
+        if len(BB) == 0 and n_recs > 0:
+            pass
+        else:
+            raise
     image_ids = [image_ids[x] for x in sorted_ind]
 
     # go down dets and mark TPs and FPs
@@ -126,24 +161,7 @@ def traffic_eval(detpath,
         BBGT = R['bbox'].astype(float)
 
         if BBGT.size > 0:
-            # compute overlaps
-            # intersection
-            ixmin = np.maximum(BBGT[:, 0], bb[0])
-            iymin = np.maximum(BBGT[:, 1], bb[1])
-            ixmax = np.minimum(BBGT[:, 2], bb[2])
-            iymax = np.minimum(BBGT[:, 3], bb[3])
-            iw = np.maximum(ixmax - ixmin + 1., 0.)
-            ih = np.maximum(iymax - iymin + 1., 0.)
-            inters = iw * ih
-
-            # union
-            uni = ((bb[2] - bb[0] + 1.) * (bb[3] - bb[1] + 1.) +
-                   (BBGT[:, 2] - BBGT[:, 0] + 1.) *
-                   (BBGT[:, 3] - BBGT[:, 1] + 1.) - inters)
-
-            overlaps = inters / uni
-            ovmax = np.max(overlaps)
-            jmax = np.argmax(overlaps)
+            ovmax, jmax = get_max_overlap(BBGT, bb)
 
         if ovmax > ovthresh:
             if not R['det'][jmax]:

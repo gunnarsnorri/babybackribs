@@ -87,7 +87,10 @@ NETS = {
     'ZF': (
             'models/ZF_end2end/test.prototxt',
             ('__background__',
-             'sign'))}
+             'sign')),
+    'gtsdb_multi': (
+            'models/ZF_end2end_gtsdb/test.prototxt',
+            ('__background__',) + tuple([str(i) for i in range(43)]))}
 
 
 def vis_detections(im, class_name, dets, thresh=0.5):
@@ -201,8 +204,12 @@ if __name__ == '__main__':
     for i in xrange(2):
         _, _ = im_detect(net, im)
 
-    im_dir = "/mnt/nvme/test_pics"
-    im_names = ["kors-%d.png" % i for i in range(1, 5)] + ["img.jpg"]
+    # im_dir = "/mnt/nvme/test_pics"
+    # im_names = ["kors-%d.png" % i for i in range(1, 5)] + ["img.jpg"]
+    # im_names = [os.path.join(im_dir, img) for img in im_names]
+
+    im_dir = "/mnt/nvme/gtsdb-rcnn/data/Images/"
+    im_names = ["00%d.ppm" % i for i in range(770, 777)]
     im_names = [os.path.join(im_dir, img) for img in im_names]
     for im_name in im_names:
         print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'

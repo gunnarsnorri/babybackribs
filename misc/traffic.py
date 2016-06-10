@@ -17,7 +17,7 @@ import scipy.sparse
 import cPickle
 # import subprocess
 import uuid
-from traffic_eval import traffic_eval
+from traffic_eval import traffic_eval, parse_rec, get_max_overlap
 # from fast_rcnn.config import cfg
 
 
@@ -244,11 +244,27 @@ class Traffic(imdb):
                     if dets == []:
                         continue
                     for k in xrange(dets.shape[0]):
-                        f.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f}\n'.
+                        det_gt_class = self.get_gt_class(dets[k, :-1], index)
+                        # TODO: check if dets[k, 0:4] should have +1
+                        # or pascal-specific
+                        f.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f} {:s}\n'.
                                 format(index, dets[k, -1],
-                                       dets[k, 0] + 1, dets[k, 1] + 1,
-                                       dets[k, 2] + 1, dets[k, 3] + 1))
+                                       dets[k, 0], dets[k, 1],
+                                       dets[k, 2], dets[k, 3], det_gt_class))
         return comp_id
+
+    def get_gt_class(self, det, image_index):
+        """Gets corresponding ground truth to detections from annotations"""
+        # Get annotations for image
+        annopath = os.path.join(
+            self._data_path, 'Annotations', '{:s}.xml'.format(image_index))
+        recs = parse_rec(annopath)
+        BBGT = np.array([x["bbox"] for x in recs]).astype(float)
+        ovmax, jmax = get_max_overlap(BBGT, det)
+        if ovmax > 0:
+            return recs[jmax]["class"]
+        else:
+            return self._classes[0]
 
     def _do_python_eval(self, output_dir='output'):
         annopath = os.path.join(
@@ -370,3 +386,10 @@ class TrafficMultiClass(Traffic):
             'STOP',
             'URDBL'
         )
+
+
+class GTSDBMultiClass(Traffic):
+
+    def __init__(self, name, devkit_path):
+        super(GTSDBMultiClass, self).__init__(name, devkit_path)
+        self._classes = ('__background__',) + tuple([str(i) for i in range(43)])
