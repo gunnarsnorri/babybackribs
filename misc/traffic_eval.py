@@ -77,7 +77,8 @@ def traffic_eval(detpath,
                  annopath,
                  imagesetfile,
                  classname,
-                 ovthresh=0.5):
+                 ovthresh=0.5,
+                 googlenet=False):
     """rec, prec, ap = traffic_eval(detpath,
                                 annopath,
                                 imagesetfile,
@@ -116,7 +117,11 @@ def traffic_eval(detpath,
     class_recs = {}
     npos = 0
     for imagename in imagenames:
-        R = [obj for obj in recs[imagename] if obj['name'] == classname]
+        if not googlenet:
+            key = 'name'
+        else:
+            key = 'class'
+        R = [obj for obj in recs[imagename] if obj[key] == classname]
         bbox = np.array([x['bbox'] for x in R])
         det = [False] * len(R)
         npos = npos + len(R)

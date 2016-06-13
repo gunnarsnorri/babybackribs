@@ -45,7 +45,7 @@ if __name__ == "__main__":
     labels_file = "/usr/share/digits/digits/jobs/20160530-164726-bf90/labels.txt"
     with open(labels_file, 'r') as lf:
         label_lines = lf.readlines()
-    classes = [x.strip() for x in label_lines]
+    classes = [x.strip().replace(" ", "_") for x in label_lines]
     mean_file = "/mnt/nvme/caffe/models/bvlc_googlenet/mean.npy"
     mean = np.load(mean_file).mean(1).mean(1)
     g = GoogLeNet(

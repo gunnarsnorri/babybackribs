@@ -37,12 +37,13 @@ class Traffic(imdb):
         self._comp_id = 'comp4'
 
         # PASCAL specific config options
-        self.config = {'cleanup': True,
+        self.config = {'cleanup': False,
                        'use_salt': True,
                        'use_diff': False,
                        'matlab_eval': False,
                        'rpn_file': None,
                        'min_size': 2}
+        self.is_googlenet = False
 
         assert os.path.exists(self._devkit_path), \
             'VOCdevkit path does not exist: {}'.format(self._devkit_path)
@@ -226,13 +227,6 @@ class Traffic(imdb):
         return path
 
     def _write_dataset_results_file(self, all_boxes):
-        use_salt = self.config['use_salt']
-        # Have to track this, i have no idea why this is set in stone.
-        comp_id = 'comp4'
-        if use_salt:
-            comp_id += '_{}'.format(os.getpid())  # diff between
-            # - and _ in inria and original?
-
         for cls_ind, cls in enumerate(self.classes):
             if cls == '__background__':
                 continue
@@ -251,7 +245,6 @@ class Traffic(imdb):
                                 format(index, dets[k, -1],
                                        dets[k, 0], dets[k, 1],
                                        dets[k, 2], dets[k, 3], det_gt_class))
-        return comp_id
 
     def get_gt_class(self, det, image_index):
         """Gets corresponding ground truth to detections from annotations"""
@@ -284,7 +277,8 @@ class Traffic(imdb):
                     annopath,
                     imagesetfile,
                     cls,
-                    ovthresh=0.5)
+                    ovthresh=0.5,
+                    googlenet=self.is_googlenet)
             except IOError:
                 continue
             if ap is not None:
@@ -334,7 +328,7 @@ class Traffic(imdb):
             self.config['cleanup'] = False
         else:
             self.config['use_salt'] = True
-            self.config['cleanup'] = True
+            self.config['cleanup'] = False
 
     def append_flipped_images(self):
         num_images = self.num_images
