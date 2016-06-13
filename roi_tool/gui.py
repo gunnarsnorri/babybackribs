@@ -26,7 +26,7 @@ class ROIApp(object):
         self.root.bind("<KP_Enter>", self.on_kp_enter)
         self.root.bind("<Return>", self.on_kp_enter)
         self.root.wm_title("ROI Tool")
-        self.root.protocol("WM_DELETE_WINDOW", self.quit())  # Confirm?
+        self.root.protocol("WM_DELETE_WINDOW", self.quit)  # Confirm?
 
         # Frame for the input field and buttons
         self.input_frame = Frame(self.root)

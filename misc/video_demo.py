@@ -54,34 +54,23 @@ NETS = {
              'sign'))}
 
 
-def vis_detections(vid, class_name, dets, thresh=0.5):
-    """Draw detected bounding boxes."""
+def get_detections(class_name, dets, thresh=0.5):
+    """Get detected bounding boxes."""
     inds = np.where(dets[:, -1] >= thresh)[0]
-    if len(inds) == 0:
-        return
-
-    for i in inds:
-        bbox = dets[i, :4]
-        score = dets[i, -1]
-
-        # draw box on video
+    bboxes = [dets[i, :4] for i in inds]
+    scores = [dets[i, -1] for i in inds]
+    return bboxes, scores
 
 
-
-def demo(net, image_name, classes):
+def video_demo(net, im, classes):
     """Detect object classes in an image using pre-computed object proposals."""
-
-    # Load the demo image
-    im = cv2.imread(image_name)
 
     # Detect all object classes and regress object bounds
     timer = Timer()
     timer.tic()
     scores, boxes = im_detect(net, im)
+    import pdb; pdb.set_trace()  # XXX BREAKPOINT
     timer.toc()
-    print ('Detection took {:.3f}s for '
-           '{:d} object proposals').format(timer.total_time, boxes.shape[0])
-
     # Visualize detections for each class
     CONF_THRESH = 0.01
     NMS_THRESH = 0.05
@@ -94,7 +83,7 @@ def demo(net, image_name, classes):
                           cls_scores[:, np.newaxis])).astype(np.float32)
         keep = nms(dets, NMS_THRESH)
         dets = dets[keep, :]
-        vis_detections(im, cls, dets, thresh=CONF_THRESH)
+        bboxes, scores = get_detections(im, cls, dets, thresh=CONF_THRESH)
 
 
 def parse_args():
@@ -147,12 +136,11 @@ if __name__ == '__main__':
     for i in xrange(2):
         _, _ = im_detect(net, im)
 
-    im_dir = "/mnt/nvme/test_pics"
-    im_names = ["kors-%d.png" % i for i in range(1, 5)] + ["img.jpg"]
-    im_names = [os.path.join(im_dir, img) for img in im_names]
-    for im_name in im_names:
-        print '~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~'
-        print 'Demo for {}'.format(im_name)
-        demo(net, im_name, classes)
+    # Open video with opencv
+    video_capture = cv2.VideoCapture("mnt/nvme/videos/cut.mp4")
+    ret, frame = video_capture.read()
+    while ret:
 
-    plt.show()
+        video_demo(net, frame, classes)
+
+        ret, frame = video_capture.read()
