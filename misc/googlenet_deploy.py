@@ -18,15 +18,16 @@ class GoogLeNet(object):
         # self.transformer.set_raw_scale('data', 255.0)
         self.classes = classes
 
-    def classify(self, image_fullpath, confidence, boxes, threshold):
+    def classify(self, image, confidence, boxes, threshold):
         """Classifies all boxes in one batch
         dets: [[pred, x1, y1, x2, y2],...]"""
-        image = cv2.imread(image_fullpath)
+        if type(image) == str:
+            image = cv2.imread(image)
         inds = np.where(confidence >= threshold)[0]
         boxes = boxes[inds].astype(int)
         self.net.blobs['data'].reshape(boxes.shape[0], 3, 224, 224)
         crops = []
-        cv2.namedWindow("preview")
+        # cv2.namedWindow("preview")
         for box in boxes:
             crop = image[box[1]:box[3]+1, box[0]:box[2]+1]
             crops.append(crop)

@@ -238,7 +238,10 @@ class Traffic(imdb):
                     if dets == []:
                         continue
                     for k in xrange(dets.shape[0]):
-                        det_gt_class = self.get_gt_class(dets[k, :-1], index)
+                        if self.is_googlenet:
+                            det_gt_class = self.get_gt_class(dets[k, :-1], index)
+                        else:
+                            det_gt_class = ""
                         # TODO: check if dets[k, 0:4] should have +1
                         # or pascal-specific
                         f.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f} {:s}\n'.
@@ -267,6 +270,7 @@ class Traffic(imdb):
         aps = []
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
+        # TODO: Define ((0, 0, 0, 0),...) for all classes
         for i, cls in enumerate(self.classes):
             if cls == '__background__':
                 continue
@@ -278,7 +282,8 @@ class Traffic(imdb):
                     imagesetfile,
                     cls,
                     ovthresh=0.5,
-                    googlenet=self.is_googlenet)
+                    googlenet=self.is_googlenet,
+                )  # TODO: add ((tp,fp,tn,fn,....)
             except IOError:
                 continue
             if ap is not None:
@@ -287,6 +292,8 @@ class Traffic(imdb):
             else:
                 print("No AP for class %s" % cls)
 
+        # TODO: Calculate skew for all classes
+        # TODO: Calculate minAP from skew and table
         print('{:.3f}'.format(np.mean(aps)))
         print('~~~~~~~~')
         print('')

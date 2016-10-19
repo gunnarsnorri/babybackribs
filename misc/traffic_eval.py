@@ -22,7 +22,10 @@ def parse_rec(filename):
                               int(bbox.find('ymin').text),
                               int(bbox.find('xmax').text),
                               int(bbox.find('ymax').text)]
-        obj_struct['class'] = obj.find('class').text
+        try:
+            obj_struct['class'] = obj.find('class').text
+        except AttributeError:
+            pass
         objects.append(obj_struct)
 
 
@@ -187,5 +190,17 @@ def traffic_eval(detpath,
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
     ap = traffic_ap(rec, prec)
+
+    import pdb; pdb.set_trace()  # XXX BREAKPOINT
+    # Class skew, and min AP
+    npos = float(npos)
+    skew = npos / nd
+    asdf = [(skew*i/npos)/(1 - skew + (skew*i/npos)) for i in range(1, int(npos))]
+    min_ap = sum(asdf)/npos
+
+    skewfile = detpath.format("extra")  # includes skew, min_ap, etc
+    with open(skewfile, "a") as f:
+        f.write("%s\t%s\t%s\n" % (classname, skew, min_ap))
+
 
     return rec, prec, ap
