@@ -401,3 +401,8 @@ class TrafficMultiClass(Traffic):
             'URDBL'
         )
 
+class GTSDBMultiClass(Traffic):
+
+    def __init__(self, name, devkit_path):
+        super(GTSDBMultiClass, self).__init__(name, devkit_path)
+        self._classes = ('__background__',) + tuple([str(i) for i in range(43)])
