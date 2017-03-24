@@ -5,8 +5,6 @@
 # --------------------------------------------------------
 
 import xml.etree.ElementTree as ET
-import os
-import cPickle
 import numpy as np
 
 
@@ -76,10 +74,35 @@ def get_max_overlap(BBGT, bb):
     jmax = np.argmax(overlaps)
     return ovmax, jmax
 
+
+def banana_eater(feelings_matrix, all_recs, bb, classname, image_id, ovthresh=0.5):
+    # TODO: Add input to matrix for tpfptnfn
+    ovmax = -np.inf
+    BBGT = all_recs[image_id]['bbox'].astype(float)
+
+    if BBGT.size > 0:
+        ovmax, jmax = get_max_overlap(BBGT, bb)
+
+    if ovmax > ovthresh:
+        if not any(all_recs[image_id]['det']):
+            # HEY, WE NEVER SAW THIS BEFORE, BETTER SEE IF POS OR NEG
+            for cn in feelings_matrix:
+                if cn == all_recs[image_id]['class'][jmax]:
+                    feelings_matrix[cn][0] += 1
+                else:
+                    feelings_matrix[cn][1] += 1
+
+            all_recs[image_id]['det'][jmax] = 1  # ALREADY CHECKED THIS ONE
+
+    return feelings_matrix, all_recs
+
+
 def traffic_eval(detpath,
                  annopath,
                  imagesetfile,
                  classname,
+                 feelings_matrix,
+                 all_recs,
                  ovthresh=0.5,
                  googlenet=False):
     """rec, prec, ap = traffic_eval(detpath,
@@ -119,6 +142,7 @@ def traffic_eval(detpath,
     # extract gt objects for this class
     class_recs = {}
     npos = 0
+    first_time = not all_recs
     for imagename in imagenames:
         if not googlenet:
             key = 'name'
@@ -130,6 +154,18 @@ def traffic_eval(detpath,
         npos = npos + len(R)
         class_recs[imagename] = {'bbox': bbox,
                                  'det': det}
+        if first_time:
+            all_R = [obj for obj in recs[imagename]]
+            all_bbox = np.array([x['bbox'] for x in all_R])
+            all_classes = [x[key] for x in all_R]
+            all_det = [False] * len(all_R)
+            all_recs[imagename] =  {
+                                    'bbox': all_bbox,
+                                    'det': all_det,
+                                    'class': all_classes
+                                }
+
+
 
     # read dets
     detfile = detpath.format(classname)
@@ -163,6 +199,7 @@ def traffic_eval(detpath,
     tp = np.zeros(nd)
     fp = np.zeros(nd)
     for d in range(nd):
+        # TODO: Add input to matrix for tpfptnfn
         R = class_recs[image_ids[d]]
         bb = BB[d, :].astype(float)
         ovmax = -np.inf
@@ -180,27 +217,17 @@ def traffic_eval(detpath,
         else:
             fp[d] = 1.
 
+        feelings_matrix, all_recs = banana_eater(feelings_matrix, all_recs, bb, classname, image_ids[d], ovthresh)
+
     # compute precision recall
     fp = np.cumsum(fp)
     tp = np.cumsum(tp)
     if not npos:
-        return None, None, None
+        return None, None, None, feelings_matrix, all_recs
     rec = tp / float(npos)
     # avoid divide by zero in case the first detection matches a difficult
     # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
     ap = traffic_ap(rec, prec)
 
-    import pdb; pdb.set_trace()  # XXX BREAKPOINT
-    # Class skew, and min AP
-    npos = float(npos)
-    skew = npos / nd
-    asdf = [(skew*i/npos)/(1 - skew + (skew*i/npos)) for i in range(1, int(npos))]
-    min_ap = sum(asdf)/npos
-
-    skewfile = detpath.format("extra")  # includes skew, min_ap, etc
-    with open(skewfile, "a") as f:
-        f.write("%s\t%s\t%s\n" % (classname, skew, min_ap))
-
-
-    return rec, prec, ap
+    return rec, prec, ap, feelings_matrix, all_recs

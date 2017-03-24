@@ -88,4 +88,8 @@ if __name__ == '__main__':
     if not cfg.TEST.HAS_RPN:
         imdb.set_proposal_method(cfg.TEST.PROPOSAL_METHOD)
 
+    # Write the compid and run type
+    with open("comp-def.txt", "a") as f:
+        run_type = args.caffemodel.split("/")[4]
+        f.write("%s:\t %s\n" % (imdb._get_comp_id(), run_type))
     test_net(net, imdb, max_per_image=args.max_per_image, vis=args.vis)

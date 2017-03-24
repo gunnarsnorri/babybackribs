@@ -242,8 +242,6 @@ class Traffic(imdb):
                             det_gt_class = self.get_gt_class(dets[k, :-1], index)
                         else:
                             det_gt_class = ""
-                        # TODO: check if dets[k, 0:4] should have +1
-                        # or pascal-specific
                         f.write('{:s} {:.3f} {:.1f} {:.1f} {:.1f} {:.1f} {:s}\n'.
                                 format(index, dets[k, -1],
                                        dets[k, 0], dets[k, 1],
@@ -270,20 +268,23 @@ class Traffic(imdb):
         aps = []
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
-        # TODO: Define ((0, 0, 0, 0),...) for all classes
+        all_recs = {}
+        feelings_matrix = {classname: [0, 0] for classname in self.classes[1:]}
         for i, cls in enumerate(self.classes):
             if cls == '__background__':
                 continue
             filename = self._get_results_file_template().format(cls)
             try:
-                rec, prec, ap = traffic_eval(
+                rec, prec, ap, feelings_matrix, all_recs = traffic_eval(
                     filename,
                     annopath,
                     imagesetfile,
                     cls,
+                    feelings_matrix,
+                    all_recs,
                     ovthresh=0.5,
-                    googlenet=self.is_googlenet,
-                )  # TODO: add ((tp,fp,tn,fn,....)
+                    googlenet=self.is_googlenet
+                )
             except IOError:
                 continue
             if ap is not None:
@@ -292,8 +293,20 @@ class Traffic(imdb):
             else:
                 print("No AP for class %s" % cls)
 
-        # TODO: Calculate skew for all classes
-        # TODO: Calculate minAP from skew and table
+        skews = []
+        minAPs = []
+        skewfilename = self._get_results_file_template().format("skew-minap")
+        with open(skewfilename, "w") as skewfile:
+            skewfile.write("classname,skew,minAP\n")
+            for cn in feelings_matrix:
+                (pos, neg) = [float(k) for k in feelings_matrix[cn]]
+                minAP = float(sum([(1/pos)*float(i)/(float(i) + neg) for i in range(1,int(pos)+1)]))
+                skew = (pos)/(pos + neg)
+                minAPs.append(minAP)
+                skews.append(skew)
+                skewfile.write("{:s},{:.3f},{:.3f}\n".format(cn, skew, minAP))
+        print('skew sum: {:.3f}'.format(sum(skews)))
+
         print('{:.3f}'.format(np.mean(aps)))
         print('~~~~~~~~')
         print('')
@@ -388,9 +401,3 @@ class TrafficMultiClass(Traffic):
             'URDBL'
         )
 
-
-class GTSDBMultiClass(Traffic):
-
-    def __init__(self, name, devkit_path):
-        super(GTSDBMultiClass, self).__init__(name, devkit_path)
-        self._classes = ('__background__',) + tuple([str(i) for i in range(43)])

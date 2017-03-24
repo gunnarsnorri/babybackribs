@@ -1,0 +1,16 @@
+comp4_215f4dd7-6352-4e44-9abd-38c68ba4c7fe:	 vgg16_min_size_4_multi
+comp4_0c58e1ae-2aa7-460f-b81c-957db1f223c1:	 vgg16_min_size_4_single
+comp4_770de892-6f4b-4730-bb70-ff01a0bcbbb3:	 vgg16_min_size_16_multi
+comp4_8675b9d5-a5c5-4213-9129-cef99fbb2b15:	 vgg16_min_size_16_single
+comp4_33fb9ff5-da04-4b74-9110-813b8358053f:	 zf_min_size_4_multi
+comp4_5648e537-c02d-4009-8f16-5674a9358b94:	 zf_min_size_4_single
+comp4_b7bcf4a5-d6b7-4b73-be4d-c60d8b1d22b2:	 zf_min_size_16_multi
+comp4_4f5f490e-1059-4e7f-9b46-adeda7f6aab8:	 zf_min_size_16_single
+comp4_13aca350-c6d6-43ca-b5dc-1ba87fb9e1c8:	 gtsdb_vgg16_min_size_4_multi
+comp4_b36310ed-558c-4bbf-9bdd-d341bf1a3da7:	 gtsdb_vgg16_min_size_4_single
+comp4_63894c3b-d27a-4ce5-9672-4d027f083cbb:	 gtsdb_vgg16_min_size_16_multi
+comp4_7e619fa3-d79a-4039-ac51-deb181ec6ecf:	 gtsdb_vgg16_min_size_16_single
+comp4_041ef3de-00a7-4892-ac98-5296695b9fe8:	 gtsdb_zf_min_size_4_multi
+comp4_64e99571-d045-477b-81a0-b1c391d3126f:	 gtsdb_zf_min_size_4_single
+comp4_6bc633f7-5dfe-4fa9-9b21-bebc50240f2c:	 gtsdb_zf_min_size_16_multi
+comp4_f1789360-f4af-4de9-8026-b0441a203ddc:	 gtsdb_zf_min_size_16_single
